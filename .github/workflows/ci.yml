@@ -138,14 +138,22 @@ jobs:
     steps:
       - name: Check Status
         run: |
-          # ci-success should only pass if test and build both succeeded
+          # ci-success logic:
+          # 1. If both test and build are skipped → pass (no changes detected)
+          # 2. If both test and build succeeded → pass (changes detected and passed)
+          # 3. Otherwise → fail
           echo "Test result: ${{ needs.test.result }}"
           echo "Build result: ${{ needs.build.result }}"
           
-          if [[ "${{ needs.test.result }}" == "success" && "${{ needs.build.result }}" == "success" ]]; then
-            echo "CI passed!"
+          if [[ "${{ needs.test.result }}" == "skipped" && "${{ needs.build.result }}" == "skipped" ]]; then
+            echo "No changes detected, CI passed!"
             exit 0
-          else
-            echo "CI failed or was not successful!"
-            exit 1
           fi
+          
+          if [[ "${{ needs.test.result }}" == "success" && "${{ needs.build.result }}" == "success" ]]; then
+            echo "All checks passed, CI passed!"
+            exit 0
+          fi
+          
+          echo "CI failed or was not successful!"
+          exit 1
