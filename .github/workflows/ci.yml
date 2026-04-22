@@ -1,5 +1,11 @@
 name: YAS Monorepo CI
 
+permissions:
+  contents: read
+  actions: write
+  checks: write
+  pull-requests: read
+
 on:
   push:
     branches: [ "main", "develop" ]
@@ -138,10 +144,22 @@ jobs:
     steps:
       - name: Check Status
         run: |
-          # If there were no changes, this should still pass
-          # If there were changes, ensure test and build were successful
-          if [[ "${{ needs.test.result }}" == "failure" || "${{ needs.build.result }}" == "failure" ]]; then
-            echo "CI failed!"
-            exit 1
+          # ci-success logic:
+          # 1. If both test and build are skipped → pass (no changes detected)
+          # 2. If both test and build succeeded → pass (changes detected and passed)
+          # 3. Otherwise → fail
+          echo "Test result: ${{ needs.test.result }}"
+          echo "Build result: ${{ needs.build.result }}"
+          
+          if [[ "${{ needs.test.result }}" == "skipped" && "${{ needs.build.result }}" == "skipped" ]]; then
+            echo "No changes detected, CI passed!"
+            exit 0
           fi
-          echo "CI passed!"
+          
+          if [[ "${{ needs.test.result }}" == "success" && "${{ needs.build.result }}" == "success" ]]; then
+            echo "All checks passed, CI passed!"
+            exit 0
+          fi
+          
+          echo "CI failed or was not successful!"
+          exit 1
