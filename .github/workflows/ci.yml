@@ -126,3 +126,19 @@ jobs:
         with:
           name: build-${{ matrix.service }}
           path: ${{ matrix.service }}/target/*.jar
+
+  # Final Job: The one you will select in GitHub Branch Protection settings
+  ci-success:
+    runs-on: ubuntu-latest
+    needs: [test, build]
+    if: always() # This must run even if some matrix jobs were skipped
+    steps:
+      - name: Check Status
+        run: |
+          # If there were no changes, this should still pass
+          # If there were changes, ensure test and build were successful
+          if [[ "${{ needs.test.result }}" == "failure" || "${{ needs.build.result }}" == "failure" ]]; then
+            echo "CI failed!"
+            exit 1
+          fi
+          echo "CI passed!"
