@@ -1,5 +1,11 @@
 name: YAS Monorepo CI
 
+permissions:
+  contents: read
+  actions: write
+  checks: write
+  pull-requests: read
+
 on:
   push:
     branches: [ "main", "develop" ]
