@@ -138,10 +138,14 @@ jobs:
     steps:
       - name: Check Status
         run: |
-          # If there were no changes, this should still pass
-          # If there were changes, ensure test and build were successful
-          if [[ "${{ needs.test.result }}" == "failure" || "${{ needs.build.result }}" == "failure" ]]; then
-            echo "CI failed!"
+          # ci-success should only pass if test and build both succeeded
+          echo "Test result: ${{ needs.test.result }}"
+          echo "Build result: ${{ needs.build.result }}"
+          
+          if [[ "${{ needs.test.result }}" == "success" && "${{ needs.build.result }}" == "success" ]]; then
+            echo "CI passed!"
+            exit 0
+          else
+            echo "CI failed or was not successful!"
             exit 1
           fi
-          echo "CI passed!"
