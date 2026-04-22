@@ -47,17 +47,20 @@ jobs:
             CHANGED_SERVICES="${SERVICES[*]}"
           fi
           
-          # Convert to JSON array for matrix strategy
+          # Convert to JSON array for matrix strategy (compact format for GITHUB_OUTPUT)
           if [ -n "$CHANGED_SERVICES" ]; then
-            JSON_SERVICES=$(echo $CHANGED_SERVICES | tr ' ' '\n' | jq -R . | jq -s .)
+            JSON_SERVICES=$(echo $CHANGED_SERVICES | tr ' ' '\n' | jq -R . | jq -s -c .)
           else
             JSON_SERVICES="[]"
           fi
-          
+
           echo "Changed services: $CHANGED_SERVICES"
           echo "JSON: $JSON_SERVICES"
-          
-          echo "services=$JSON_SERVICES" >> $GITHUB_OUTPUT
+
+          # Use proper delimiter for multi-line outputs
+          echo "services<<EOF" >> $GITHUB_OUTPUT
+          echo "$JSON_SERVICES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
           echo "changed-services=$CHANGED_SERVICES" >> $GITHUB_OUTPUT
 
   # Job 2: Test Phase - Run unit tests for changed services
