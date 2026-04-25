@@ -1,8 +1,10 @@
 package com.yas.product.service;
 
+import com.yas.commonlibrary.exception.BadRequestException;
 import com.yas.commonlibrary.exception.DuplicatedException;
 import com.yas.commonlibrary.exception.NotFoundException;
 import com.yas.product.model.Brand;
+import com.yas.product.model.Product;
 import com.yas.product.repository.BrandRepository;
 import com.yas.product.viewmodel.brand.BrandListGetVm;
 import com.yas.product.viewmodel.brand.BrandPostVm;
@@ -21,6 +23,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -105,5 +108,35 @@ class BrandServiceTest {
         Assertions.assertThrows(NotFoundException.class, () -> {
             brandService.update(brandPostVm, 1L);
         });
+    }
+
+    @Test
+    void test_delete_brand_successfully() {
+        Brand existingBrand = new Brand();
+        existingBrand.setId(1L);
+        existingBrand.setProducts(List.of());
+        when(brandRepository.findById(1L)).thenReturn(Optional.of(existingBrand));
+
+        brandService.delete(1L);
+
+        verify(brandRepository).deleteById(1L);
+    }
+
+    @Test
+    void test_delete_nonexistent_brand_should_throw_not_found() {
+        when(brandRepository.findById(1L)).thenReturn(Optional.empty());
+
+        Assertions.assertThrows(NotFoundException.class, () -> brandService.delete(1L));
+    }
+
+    @Test
+    void test_delete_brand_with_products_should_throw_bad_request() {
+        Brand existingBrand = new Brand();
+        existingBrand.setId(1L);
+        existingBrand.setProducts(List.of(new Product()));
+        when(brandRepository.findById(1L)).thenReturn(Optional.of(existingBrand));
+
+        Assertions.assertThrows(BadRequestException.class,
+            () -> brandService.delete(1L));
     }
 }
