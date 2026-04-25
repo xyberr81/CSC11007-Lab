@@ -1,5 +1,6 @@
 package com.yas.product.service;
 
+import com.yas.commonlibrary.exception.BadRequestException;
 import com.yas.commonlibrary.exception.DuplicatedException;
 import com.yas.commonlibrary.exception.NotFoundException;
 import com.yas.product.model.Brand;
@@ -135,7 +136,7 @@ class BrandServiceTest {
         existingBrand.setProducts(List.of(new Product()));
         when(brandRepository.findById(1L)).thenReturn(Optional.of(existingBrand));
 
-        Assertions.assertThrows(com.yas.commonlibrary.exception.BadRequestException.class,
+        Assertions.assertThrows(BadRequestException.class,
             () -> brandService.delete(1L));
     }
 }
