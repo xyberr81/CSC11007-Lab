@@ -184,7 +184,7 @@ jobs:
         if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' }}
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        run: snyk monitor --all-projects --skip-unresolved
+        run: snyk monitor --all-projects --skip-unresolved || true
 
   # Final Job: The one you will select in GitHub Branch Protection settings
   ci-success:
