@@ -1,5 +1,6 @@
 package com.yas.location.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.yas.location.LocationApplication;
@@ -56,7 +57,28 @@ public class DistrictServiceTest {
     @Test
     void getDistrict_WithValidId_Success() {
         generateTestData();
-        List<DistrictGetVm> districtGetVm = districtService.getList(district1.getId());
+        List<DistrictGetVm> districtGetVm = districtService.getList(stateOrProvince.getId());
         assertNotNull(districtGetVm);
+        assertEquals(1, districtGetVm.size());
+        assertEquals("district-1", districtGetVm.get(0).name());
+    }
+
+    @Test
+    void getDistrict_WithInvalidId_ReturnEmptyList() {
+        List<DistrictGetVm> districtGetVm = districtService.getList(100000L);
+        assertNotNull(districtGetVm);
+        assertEquals(0, districtGetVm.size());
+    }
+
+    @Test
+    void getDistrict_WithMultipleDistricts_Success() {
+        generateTestData();
+        districtRepository.save(District.builder()
+            .name("district-2")
+            .stateProvince(stateOrProvince)
+            .build());
+        List<DistrictGetVm> districtGetVm = districtService.getList(stateOrProvince.getId());
+        assertNotNull(districtGetVm);
+        assertEquals(2, districtGetVm.size());
     }
 }
