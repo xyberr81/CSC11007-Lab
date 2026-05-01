@@ -173,6 +173,7 @@ public class StateOrProvinceServiceTest {
 
     @Test
     void getStateOrProvinceAndCountryName_EmptyIds_ReturnEmptyList() {
+        generateTestData();
         List<StateOrProvinceAndCountryGetNameVm> vms =
             stateOrProvinceService.getStateOrProvinceAndCountryNames(List.of());
         assertNotNull(vms);
