@@ -167,7 +167,8 @@ jobs:
         if: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' }}
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: mvn -B clean verify -DskipTests sonar:sonar -Dsonar.token="$SONAR_TOKEN" -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }}
+        run: mvn -B clean verify -DskipTests sonar:sonar -Dsonar.token="$SONAR_TOKEN" -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} -Dsonar.projectKey=Devops-cicd-lab
+
 
       - name: Set up Snyk CLI
         if: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' }}
