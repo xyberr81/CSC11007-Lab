@@ -249,6 +249,16 @@ class CartItemServiceTest {
         }
     }
 
+    @Test
+    void testDeleteCartItem_shouldDeleteByCurrentUserAndProductId() {
+        Long productId = 10L;
+        mockCurrentUserId(CURRENT_USER_ID_SAMPLE);
+
+        cartItemService.deleteCartItem(productId);
+
+        verify(cartItemRepository).deleteByCustomerIdAndProductId(CURRENT_USER_ID_SAMPLE, productId);
+    }
+
     private void mockCurrentUserId(String userIdToMock) {
         Jwt jwt = mock(Jwt.class);
         JwtAuthenticationToken jwtToken = new JwtAuthenticationToken(jwt);
