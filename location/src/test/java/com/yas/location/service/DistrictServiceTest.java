@@ -72,13 +72,17 @@ public class DistrictServiceTest {
 
     @Test
     void getDistrict_WithMultipleDistricts_Success() {
-        generateTestData();
+        generateTestData(); // adds "district-1"
         districtRepository.save(District.builder()
-            .name("district-2")
+            .name("a-district")
             .stateProvince(stateOrProvince)
             .build());
+        
         List<DistrictGetVm> districtGetVm = districtService.getList(stateOrProvince.getId());
+        
         assertNotNull(districtGetVm);
         assertEquals(2, districtGetVm.size());
+        assertEquals("a-district", districtGetVm.get(0).name());
+        assertEquals("district-1", districtGetVm.get(1).name());
     }
 }
