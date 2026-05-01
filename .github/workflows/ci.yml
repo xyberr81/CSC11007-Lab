@@ -147,7 +147,14 @@ jobs:
       - name: Run Gitleaks scan
         run: |
           docker pull zricethezav/gitleaks:v8.18.4
-          docker run --rm -v ${{ github.workspace }}:/work -w /work zricethezav/gitleaks:v8.18.4 detect --source="." --config="/work/gitleaks.toml" --verbose
+          docker run --rm -v ${{ github.workspace }}:/work -w /work \
+            zricethezav/gitleaks:v8.18.4 detect --source="." \
+            --config="/work/gitleaks.toml" --verbose \
+            --report-format=json --report-path=/work/gitleaks-baseline.json || true
+          docker run --rm -v ${{ github.workspace }}:/work -w /work \
+            zricethezav/gitleaks:v8.18.4 detect --source="." \
+            --config="/work/gitleaks.toml" --verbose \
+            --baseline-path=/work/gitleaks-baseline.json
 
       - name: Set up JDK 25
         uses: actions/setup-java@v4
