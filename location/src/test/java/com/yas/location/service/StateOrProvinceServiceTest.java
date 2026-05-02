@@ -172,6 +172,15 @@ public class StateOrProvinceServiceTest {
     }
 
     @Test
+    void getStateOrProvinceAndCountryName_EmptyIds_ReturnEmptyList() {
+        generateTestData();
+        List<StateOrProvinceAndCountryGetNameVm> vms =
+            stateOrProvinceService.getStateOrProvinceAndCountryNames(List.of());
+        assertNotNull(vms);
+        assertEquals(0, vms.size());
+    }
+
+    @Test
     void getAllStateOrProvinces_Success() {
         generateTestData();
         List<StateOrProvinceVm> stateOrProvinceVms = stateOrProvinceService.findAll();
