@@ -146,6 +146,26 @@ class RatingServiceTest {
     }
 
     @Test
+    void createRating_CustomerNotFound_ShouldThrowNotFoundException() {
+        Jwt jwt = mock(Jwt.class);
+        JwtAuthenticationToken authentication = mock(JwtAuthenticationToken.class);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        when(authentication.getToken()).thenReturn(jwt);
+        when(authentication.getName()).thenReturn(userId);
+        when(jwt.getSubject()).thenReturn(userId);
+        when(orderService.checkOrderExistsByProductAndUserWithStatus(anyLong())).
+                thenReturn(new OrderExistsByProductAndUserGetVm(true));
+        when(customerService.getCustomer()).thenReturn(null);
+
+        RatingPostVm ratingPostVm = RatingPostVm.builder().content("comment 4").productName("product3").star(4).productId(3L).build();
+        
+        NotFoundException exception = assertThrows(NotFoundException.class,
+                () -> ratingService.createRating(ratingPostVm));
+
+        assertEquals(String.format("CUSTOMER %s is not found", userId), exception.getMessage());
+    }
+
+    @Test
     void createRating_InvalidAuthorization_ShouldThrowAccessDeniedException() {
         RatingPostVm ratingPostVm = RatingPostVm.builder().content("comment 4").productName("product3").star(4).productId(3L).build();
 
