@@ -17,13 +17,16 @@ describe('ToastService', () => {
     it('should call toast.success with message and default options', () => {
       toastSuccess('Operation successful');
 
-      expect(toast.success).toHaveBeenCalledWith('Operation successful', {
-        position: 'top-right',
-        autoClose: 3000,
-        closeOnClick: true,
-        pauseOnHover: false,
-        theme: 'colored',
-      });
+      expect(toast.success).toHaveBeenCalledWith(
+        'Operation successful',
+        expect.objectContaining({
+          position: 'top-right',
+          autoClose: 3000,
+          closeOnClick: true,
+          pauseOnHover: false,
+          theme: 'colored',
+        })
+      );
     });
 
     it('should call toast.success with custom options when provided', () => {
@@ -38,13 +41,16 @@ describe('ToastService', () => {
     it('should call toast.error with message and default options', () => {
       toastError('Something went wrong');
 
-      expect(toast.error).toHaveBeenCalledWith('Something went wrong', {
-        position: 'top-right',
-        autoClose: 3000,
-        closeOnClick: true,
-        pauseOnHover: false,
-        theme: 'colored',
-      });
+      expect(toast.error).toHaveBeenCalledWith(
+        'Something went wrong',
+        expect.objectContaining({
+          position: 'top-right',
+          autoClose: 3000,
+          closeOnClick: true,
+          pauseOnHover: false,
+          theme: 'colored',
+        })
+      );
     });
 
     it('should call toast.error with custom options when provided', () => {

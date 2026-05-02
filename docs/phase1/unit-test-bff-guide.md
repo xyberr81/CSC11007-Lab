@@ -24,11 +24,36 @@ storefront-bff/src/main/java/com/yas/storefrontbff/
 └── StorefrontBffApplication.java  ← EXCLUDE khỏi jacoco
 ```
 
-> ℹ️ `config/` và `*Application.java` đã được exclude sẵn trong cấu hình JaCoCo của `pom.xml` — không cần viết test cho các class này.
+> ℹ️ `config/` và `*Application.java` đã được exclude sẵn trong cấu hình JaCoCo của parent `pom.xml` — không cần viết test cho các class này. Tuy nhiên, vẫn cần phải kích hoạt JaCoCo ở phase test để CI ghi nhận coverage.
 
 ---
 
-### Bước 1: Tạo thư mục test
+### Bước 1: Thêm JaCoCo Execution vào `pom.xml`
+
+Mở file `storefront-bff/pom.xml`, tìm thẻ `<plugins>` và thêm cấu hình `jacoco-maven-plugin` (nếu chưa có):
+
+```xml
+<plugin>
+    <groupId>org.jacoco</groupId>
+    <artifactId>jacoco-maven-plugin</artifactId>
+    <version>0.8.14</version>
+    <executions>
+        <execution>
+            <id>default</id>
+            <goals><goal>prepare-agent</goal></goals>
+        </execution>
+        <execution>
+            <id>report</id>
+            <phase>test</phase>
+            <goals><goal>report</goal></goals>
+        </execution>
+    </executions>
+</plugin>
+```
+
+---
+
+### Bước 2: Tạo thư mục test
 
 ```powershell
 cd D:\...\yas\storefront-bff
@@ -39,7 +64,7 @@ New-Item -ItemType Directory -Path src\test\java\com\yas\storefrontbff\controlle
 
 ---
 
-### Bước 2: Viết test cho tất cả ViewModel
+### Bước 3: Viết test cho tất cả ViewModel
 
 #### `AuthenticatedUserVmTest.java`
 
@@ -355,7 +380,7 @@ class TokenResponseVmTest {
 
 ---
 
-### Bước 3: Viết test cho AuthenticationController
+### Bước 4: Viết test cho AuthenticationController
 
 Tạo file `New-Item src\test\java\com\yas\storefrontbff\controller\AuthenticationControllerTest.java`
 
@@ -419,7 +444,7 @@ class AuthenticationControllerTest {
 
 ---
 
-### Bước 4: Chạy test và xem coverage
+### Bước 5: Chạy test và xem coverage
 
 ```powershell
 ./mvnw test jacoco:report
@@ -465,17 +490,9 @@ backoffice-bff/src/main/java/com/yas/backofficebff/
 
 ```xml
 <plugin>
-    <groupId>org.jacoco</groupId>                           # 2 dòng này là đủ
-    <artifactId>jacoco-maven-plugin</artifactId>            # 2 dòng này là đủ
+    <groupId>org.jacoco</groupId>
+    <artifactId>jacoco-maven-plugin</artifactId>
     <version>0.8.14</version>
-    <configuration>
-        <excludes>
-            <exclude>com/yas/**/*Application.class</exclude>
-            <exclude>com/yas/**/config/**</exclude>
-            <exclude>com/yas/**/exception/**</exclude>
-            <exclude>com/yas/**/constants/**</exclude>
-        </excludes>
-    </configuration>
     <executions>
         <execution>
             <id>default</id>

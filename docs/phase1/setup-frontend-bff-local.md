@@ -79,7 +79,7 @@ identity:
     KC_HTTP_PORT: 80
     # ... các biến khác giữ nguyên
   ports:
-    - "80:80" # ← THÊM DÒNG NÀY
+    - "8080:80" # ← THÊM DÒNG NÀY
   volumes:
     - ./identity/realm-export.json:/opt/keycloak/data/import/realm-export.json
     - ./identity/themes/yas/theme:/opt/keycloak/themes
@@ -131,22 +131,28 @@ curl http://identity/realms/Yas/.well-known/openid-configuration
 ### Nhóm 2 — Các service phụ trợ
 
 ```powershell
-docker compose -f docker-compose.yml up -d zookeeper kafka
+docker compose -f docker-compose.yml up -d zookeeper kafka redis
 ```
 
-### Nhóm 3 — Frontend & Nginx
+### Nhóm 3 — Chạy toàn bộ Backend
+
+```powershell
+docker compose -f docker-compose.yml up -d media product customer cart tax location inventory promotion rating payment order sampledata
+```
+
+### Nhóm 4 — Frontend & Nginx
 
 ```powershell
 docker compose -f docker-compose.yml up -d nginx storefront-nextjs backoffice-nextjs
 ```
 
-### Nhóm 4 — Các service còn lại (tuỳ chọn, nếu cần test đầy đủ)
+### Nhóm 5 — Các service còn lại (tuỳ chọn, nếu cần test đầy đủ)
 
 ```powershell
-docker compose -f docker-compose.yml -f docker-compose.search.yml up -d redis kafka-connect kafka-ui pgadmin swagger-ui elasticsearch
+docker compose -f docker-compose.yml -f docker-compose.search.yml up -d kafka-connect kafka-ui pgadmin swagger-ui elasticsearch
 ```
 
-> ℹ️ Service `nginx` có thể ở trạng thái `Restarting` nếu các service backend chưa chạy — đây là bình thường ở giai đoạn này.
+> ℹ️ Service `nginx` có thể ở trạng thái `Restarting` nếu các service backend chưa chạy
 
 ---
 
@@ -185,7 +191,7 @@ Service chạy ở port mặc định **8888** (kiểm tra `application.properti
 
 ## Bước 6: Chạy Backoffice-BFF (Spring Boot)
 
-Mở terminal mới (giữ Storefront-BFF đang chạy). khi chạy local bằng ./mvnw thì cả hai tranh nhau cùng một port nền cần assign port khác cho backoffice-bff để tránh conflict:
+Mở terminal mới (giữ Storefront-BFF đang chạy). Khi chạy local bằng ./mvnw thì cả hai service tranh nhau cùng một port, nên cần assign port khác cho backoffice-bff để tránh conflict:
 
 ```powershell
 cd backoffice-bff

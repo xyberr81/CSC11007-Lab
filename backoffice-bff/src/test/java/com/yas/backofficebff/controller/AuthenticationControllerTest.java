@@ -43,8 +43,8 @@ class AuthenticationControllerTest {
     }
 
     @Test
-    void whenPrincipalIsNull_thenThrowNullPointerException() {
-        assertThrows(NullPointerException.class, () -> {
+    void whenPrincipalIsNull_thenThrowIllegalStateException() {
+        assertThrows(IllegalStateException.class, () -> {
             authenticationController.user(null);
         });
     }

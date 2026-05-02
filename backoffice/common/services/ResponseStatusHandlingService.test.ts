@@ -94,6 +94,16 @@ describe('ResponseStatusHandlingService', () => {
       await handleCreatingResponse({ status: 500 });
       expect(toastError).toHaveBeenCalledWith('Create failed');
     });
+
+    it('should handle error when json() parsing fails', async () => {
+      const mockResponse = {
+        status: 400,
+        json: jest.fn().mockRejectedValue(new Error('Invalid JSON')),
+      };
+
+      await expect(handleCreatingResponse(mockResponse as any))
+        .rejects.toThrow('Invalid JSON');
+    });
   });
 
   // ─── handleResponse ──────────────────────────────────────────

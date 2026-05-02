@@ -8,6 +8,8 @@ const customJestConfig = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   testEnvironment: 'jest-environment-jsdom',
   moduleDirectories: ['node_modules', '<rootDir>/'],
+  // NOTE: These moduleNameMapper paths MUST match tsconfig.json compilerOptions.paths
+  // Verify: npx tsc --showConfig
   moduleNameMapper: {
     '^@commonServices/(.*)$': '<rootDir>/common/services/$1',
     '^@commonItems/(.*)$': '<rootDir>/common/items/$1',

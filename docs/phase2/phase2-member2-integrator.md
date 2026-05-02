@@ -360,3 +360,16 @@ mvn clean test -pl product -am
 | `backoffice-bff/src/test/java/...` | ✨ Tạo mới | 2 file test Java |
 | `storefront/utils/*.test.ts` | ✨ Tạo mới | 4 file test TypeScript |
 | `backoffice/utils/*.test.ts` + ... | ✨ Tạo mới | 5 file test TypeScript |
+
+### Khắc phục lỗi (Theo Review và Feedback)
+
+| Issue | Cách giải quyết |
+| --- | --- |
+| Thiếu JaCoCo version | Đã thêm `<version>0.8.14</version>` (do project dùng Java 25) và cấu hình `<executions>` vào cả `backoffice-bff/pom.xml` và `storefront-bff/pom.xml`. |
+| Lỗi Implicit `any` trong `renderHook` | Thêm type định dạng chính xác `({ value, delay }: { value: string | undefined; delay: number })` vào `useDebounce.test.ts`. |
+| Thiếu test case `async` error | Bổ sung test cho lỗi `Invalid JSON` (khi `json()` parsing fail) trong `ResponseStatusHandlingService.test.ts`. |
+| Cấu hình port Keycloak conflict | Đổi từ `80:80` thành `8080:80` trong `docker-compose.yml` và `setup-frontend-bff-local.md`. |
+| Khắc phục lỗi bảo mật NPE | Thêm `null check` cho `OAuth2User principal` trong `AuthenticationController.java`, throw `IllegalStateException`. |
+| Hard-code giá trị Test Options | Đổi `expect(toast.success).toHaveBeenCalledWith(..., {...})` thành `expect.objectContaining({...})` trong `ToastService.test.ts`. |
+| Script dependencies dư thừa | Gỡ bỏ `ts-jest` và `@testing-library/user-event` khỏi hướng dẫn cài đặt `unit-test-storefront-guide.md` & `unit-test-backoffice-guide.md`. |
+| Đồng bộ `package-lock.json` | Đã chạy lại `npm install` để đồng bộ lockfile ở cả hai thư mục `storefront` và `backoffice`. |

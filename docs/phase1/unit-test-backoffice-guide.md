@@ -22,7 +22,7 @@ backoffice/
 
 ```powershell
 cd backoffice
-npm install --save-dev jest jest-environment-jsdom @testing-library/react @testing-library/jest-dom @testing-library/user-event @types/jest ts-jest
+npm install --save-dev jest jest-environment-jsdom @testing-library/react @testing-library/jest-dom @testing-library/user-event @types/jest
 ```
 
 ---
