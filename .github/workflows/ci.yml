@@ -92,6 +92,10 @@ jobs:
       - name: Run Tests for ${{ matrix.service }}
         run: mvn clean test -pl ${{ matrix.service }} -am
       
+      - name: Generate Jacoco Coverage Report
+        run: mvn jacoco:report -pl ${{ matrix.service }} -am
+        if: always()
+
       - name: Upload Test Results
         uses: actions/upload-artifact@v4
         if: always()
@@ -103,6 +107,7 @@ jobs:
       
       - name: Upload Coverage Report
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: coverage-${{ matrix.service }}
           path: ${{ matrix.service }}/target/site/jacoco/
