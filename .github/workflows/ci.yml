@@ -90,7 +90,7 @@ jobs:
           cache: 'maven'
       
       - name: Run Tests for ${{ matrix.service }}
-        run: mvn clean test -pl ${{ matrix.service }} -am
+        run: mvn clean verify -pl ${{ matrix.service }} -am
       
       - name: Upload Test Results
         uses: actions/upload-artifact@v4
