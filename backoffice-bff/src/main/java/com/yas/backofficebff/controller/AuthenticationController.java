@@ -11,11 +11,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthenticationController {
     @GetMapping("/authentication/user")
     public ResponseEntity<AuthenticatedUser> user(@AuthenticationPrincipal OAuth2User principal) {
-        // NOTE: Intentionally throws NPE if principal is null (OAuth2 authentication is required).
-        // If unauthenticated requests should be handled gracefully, add null check.
-        if (principal == null) {
-            throw new IllegalStateException("Authentication required");
-        }
         AuthenticatedUser authenticatedUser = new AuthenticatedUser(principal.getAttribute("preferred_username"));
         return ResponseEntity.ok(authenticatedUser);
     }
