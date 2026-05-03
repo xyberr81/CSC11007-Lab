@@ -22,6 +22,7 @@ import com.yas.commonlibrary.exception.NotFoundException;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -53,6 +54,11 @@ class CartItemServiceTest {
     @BeforeEach
     void setUp() {
         Mockito.reset(cartItemRepository, productService);
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
     }
 
     private static final String CURRENT_USER_ID_SAMPLE = "userId";
@@ -190,6 +196,18 @@ class CartItemServiceTest {
             verify(cartItemRepository).findByCustomerIdOrderByCreatedOnDesc(CURRENT_USER_ID_SAMPLE);
             assertEquals(existingCartItems.size(), cartItemGetVms.size());
         }
+
+        @Test
+        void testGetCartItems_whenNoCartItems_shouldReturnEmptyList() {
+            mockCurrentUserId(CURRENT_USER_ID_SAMPLE);
+            when(cartItemRepository.findByCustomerIdOrderByCreatedOnDesc(CURRENT_USER_ID_SAMPLE))
+                .thenReturn(List.of());
+
+            List<CartItemGetVm> cartItemGetVms = cartItemService.getCartItems();
+
+            verify(cartItemRepository).findByCustomerIdOrderByCreatedOnDesc(CURRENT_USER_ID_SAMPLE);
+            assertEquals(0, cartItemGetVms.size());
+        }
     }
 
     @Nested
@@ -247,6 +265,31 @@ class CartItemServiceTest {
             assertEquals(1, cartItemGetVms.size());
             assertEquals(expectedQuantity, cartItemGetVms.getFirst().quantity());
         }
+
+        @Test
+        void testDeleteOrAdjustCartItem_whenNoMatchingCartItems_shouldReturnEmptyList() {
+            CartItemDeleteVm cartItemDeleteVm = new CartItemDeleteVm(PRODUCT_ID_SAMPLE, 1);
+            List<CartItemDeleteVm> cartItemDeleteVms = List.of(cartItemDeleteVm);
+
+            mockCurrentUserId(CURRENT_USER_ID_SAMPLE);
+            when(cartItemRepository.findByCustomerIdAndProductIdIn(any(), any())).thenReturn(List.of());
+            when(cartItemRepository.saveAll(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+            List<CartItemGetVm> cartItemGetVms = cartItemService.deleteOrAdjustCartItem(cartItemDeleteVms);
+
+            verify(cartItemRepository).deleteAll(List.of());
+            verify(cartItemRepository).saveAll(List.of());
+            assertEquals(0, cartItemGetVms.size());
+        }
+    }
+
+    @Test
+    void testDeleteCartItem_shouldDeleteByCustomerAndProductId() {
+        mockCurrentUserId(CURRENT_USER_ID_SAMPLE);
+
+        cartItemService.deleteCartItem(PRODUCT_ID_SAMPLE);
+
+        verify(cartItemRepository).deleteByCustomerIdAndProductId(CURRENT_USER_ID_SAMPLE, PRODUCT_ID_SAMPLE);
     }
 
     private void mockCurrentUserId(String userIdToMock) {
