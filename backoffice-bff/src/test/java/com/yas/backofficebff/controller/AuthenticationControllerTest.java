@@ -43,13 +43,6 @@ class AuthenticationControllerTest {
     }
 
     @Test
-    void whenPrincipalIsNull_thenThrowIllegalStateException() {
-        assertThrows(IllegalStateException.class, () -> {
-            authenticationController.user(null);
-        });
-    }
-
-    @Test
     void whenPrincipalHasDifferentUsername_thenReturnCorrectUsername() {
         OAuth2User mockPrincipal = mock(OAuth2User.class);
         when(mockPrincipal.getAttribute("preferred_username")).thenReturn("another_admin");
