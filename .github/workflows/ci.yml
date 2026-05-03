@@ -99,10 +99,15 @@ jobs:
             npm run test:coverage
           fi
 
+      - name: Generate Jacoco Coverage Report
+        run: mvn jacoco:report -pl ${{ matrix.service }} -am
+        if: always()
+
       - name: Quality Gate Check
         run: |
           chmod +x scripts/check_quality_gate.sh
           ./scripts/check_quality_gate.sh ${{ matrix.service }}
+        if: always()
 
       - name: Upload Test Results
         uses: actions/upload-artifact@v4
@@ -116,6 +121,7 @@ jobs:
 
       - name: Upload Coverage Report
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: coverage-${{ matrix.service }}
           path: |
