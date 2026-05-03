@@ -100,7 +100,10 @@ jobs:
           fi
 
       - name: Generate Jacoco Coverage Report
-        run: mvn jacoco:report -pl ${{ matrix.service }} -am
+        run: |
+          if [ -f "${{ matrix.service }}/pom.xml" ]; then
+            mvn jacoco:report -pl ${{ matrix.service }} -am
+          fi
         if: always()
 
       - name: Quality Gate Check
