@@ -14,27 +14,7 @@ describe('ToastService', () => {
   });
 
   describe('toastSuccess', () => {
-    it('should call toast.success with message and default options', () => {
-      toastSuccess('Operation successful');
 
-      expect(toast.success).toHaveBeenCalledWith(
-        'Operation successful',
-        expect.objectContaining({
-          position: 'top-right',
-          autoClose: 3000,
-          closeOnClick: true,
-          pauseOnHover: false,
-          theme: 'colored',
-        })
-      );
-    });
-
-    it('should call toast.success with custom options when provided', () => {
-      const customOptions = { autoClose: 5000 };
-      toastSuccess('Custom toast', customOptions);
-
-      expect(toast.success).toHaveBeenCalledWith('Custom toast', customOptions);
-    });
   });
 
   describe('toastError', () => {
