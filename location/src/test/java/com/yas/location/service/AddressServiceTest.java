@@ -101,6 +101,12 @@ public class AddressServiceTest {
     }
 
     @Test
+    void getAddressList_EmptyIds_ReturnEmptyList() {
+        List<AddressDetailVm> addressDetailVmList = addressService.getAddressList(List.of());
+        assertEquals(0, addressDetailVmList.size());
+    }
+
+    @Test
     void updateAddress_validData_Success() {
         generateTestData();
         AddressPostVm addressPostVm = AddressPostVm.builder()
@@ -166,7 +172,7 @@ public class AddressServiceTest {
 
     @Test
     void deleteAddress_givenAddressIdInValid_ThrowsAddressNotFoundException() {
-        NotFoundException exception = assertThrows(NotFoundException.class, () -> addressService.deleteAddress(1L));
-        assertEquals(String.format("The address %s is not found", "1"), exception.getMessage());
+        NotFoundException exception = assertThrows(NotFoundException.class, () -> addressService.deleteAddress(100000L));
+        assertEquals(String.format("The address %s is not found", "100000"), exception.getMessage());
     }
 }
