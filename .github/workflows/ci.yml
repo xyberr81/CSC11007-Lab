@@ -28,7 +28,7 @@ jobs:
         id: changes
         run: |
           # List all services in monorepo
-          SERVICES=("product" "cart" "customer" "order" "inventory" "payment" "payment-paypal" "rating" "search" "media" "location" "tax" "promotion" "webhook" "sampledata" "recommendation" "delivery")
+          SERVICES=("product" "cart" "customer" "order" "inventory" "payment" "payment-paypal" "rating" "search" "media" "location" "tax" "promotion" "webhook" "sampledata" "recommendation" "delivery" "storefront" "backoffice" "storefront-bff" "backoffice-bff")
           
           # Get changed files
           if [ "${{ github.event_name }}" == "pull_request" ]; then
@@ -90,8 +90,25 @@ jobs:
           cache: 'maven'
       
       - name: Run Tests for ${{ matrix.service }}
-        run: mvn clean test -pl ${{ matrix.service }} -am
-      
+        run: |
+          if [ -f "${{ matrix.service }}/pom.xml" ]; then
+            mvn clean test -pl ${{ matrix.service }} -am
+          elif [ -f "${{ matrix.service }}/package.json" ]; then
+            cd ${{ matrix.service }}
+            npm ci
+            npm run test:coverage
+          fi
+
+      - name: Generate Jacoco Coverage Report
+        run: mvn jacoco:report -pl ${{ matrix.service }} -am
+        if: always()
+
+      - name: Quality Gate Check
+        run: |
+          chmod +x scripts/check_quality_gate.sh
+          ./scripts/check_quality_gate.sh ${{ matrix.service }}
+        if: always()
+
       - name: Upload Test Results
         uses: actions/upload-artifact@v4
         if: always()
@@ -100,12 +117,16 @@ jobs:
           path: |
             ${{ matrix.service }}/target/surefire-reports/*.xml
             ${{ matrix.service }}/target/failsafe-reports/*.xml
-      
+            ${{ matrix.service }}/coverage/lcov.info
+
       - name: Upload Coverage Report
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: coverage-${{ matrix.service }}
-          path: ${{ matrix.service }}/target/site/jacoco/
+          path: |
+            ${{ matrix.service }}/target/site/jacoco/
+            ${{ matrix.service }}/coverage/
 
   # Job 3: Build Phase - Build and package applications
   build:
@@ -128,13 +149,22 @@ jobs:
           cache: 'maven'
       
       - name: Build Application
-        run: mvn clean package -DskipTests -pl ${{ matrix.service }} -am
-      
+        run: |
+          if [ -f "${{ matrix.service }}/pom.xml" ]; then
+            mvn clean package -DskipTests -pl ${{ matrix.service }} -am
+          elif [ -f "${{ matrix.service }}/package.json" ]; then
+            cd ${{ matrix.service }}
+            npm ci
+            npm run build
+          fi
+
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
           name: build-${{ matrix.service }}
-          path: ${{ matrix.service }}/target/*.jar
+          path: |
+            ${{ matrix.service }}/target/*.jar
+            ${{ matrix.service }}/.next/
 
 # Job 4: Security Phase - Run Gitleaks, SonarQube and Snyk scans
   security:

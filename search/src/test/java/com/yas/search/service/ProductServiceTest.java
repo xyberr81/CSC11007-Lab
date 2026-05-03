@@ -162,6 +162,56 @@ class ProductServiceTest {
         verify(elasticsearchOperations).search(any(NativeQuery.class), eq(Product.class));
     }
 
+    @Test
+    void testFindProductAdvance_withEmptyCriteria_ReturnProductListGetVm() {
+        SearchHits<Product> searchHits = getSearchHits();
+        when(elasticsearchOperations.search(any(NativeQuery.class), eq(Product.class))).thenReturn(searchHits);
+
+        ProductCriteriaDto criteriaDto = new ProductCriteriaDto(
+            "", 0, 10, "", "", "", null, null, SortType.DEFAULT);
+        ProductListGetVm result = productService.findProductAdvance(criteriaDto);
+
+        assertNotNull(result);
+        verify(elasticsearchOperations).search(any(NativeQuery.class), eq(Product.class));
+    }
+
+    @Test
+    void testFindProductAdvance_withMultipleBrands_ReturnProductListGetVm() {
+        SearchHits<Product> searchHits = getSearchHits();
+        when(elasticsearchOperations.search(any(NativeQuery.class), eq(Product.class))).thenReturn(searchHits);
+
+        ProductCriteriaDto criteriaDto = new ProductCriteriaDto(
+            "test", 0, 10, "Brand1,Brand2", "Cat1", "Attr1", 10.0, 100.0, SortType.DEFAULT);
+        ProductListGetVm result = productService.findProductAdvance(criteriaDto);
+
+        assertNotNull(result);
+        verify(elasticsearchOperations).search(any(NativeQuery.class), eq(Product.class));
+    }
+
+    @Test
+    void testFindProductAdvance_withOnlyMinPrice_ReturnProductListGetVm() {
+        SearchHits<Product> searchHits = getSearchHits();
+        when(elasticsearchOperations.search(any(NativeQuery.class), eq(Product.class))).thenReturn(searchHits);
+
+        ProductCriteriaDto criteriaDto = new ProductCriteriaDto(
+            "test", 0, 10, null, null, null, 10.0, null, SortType.DEFAULT);
+        productService.findProductAdvance(criteriaDto);
+
+        verify(elasticsearchOperations).search(any(NativeQuery.class), eq(Product.class));
+    }
+
+    @Test
+    void testFindProductAdvance_withOnlyMaxPrice_ReturnProductListGetVm() {
+        SearchHits<Product> searchHits = getSearchHits();
+        when(elasticsearchOperations.search(any(NativeQuery.class), eq(Product.class))).thenReturn(searchHits);
+
+        ProductCriteriaDto criteriaDto = new ProductCriteriaDto(
+            "test", 0, 10, null, null, null, null, 100.0, SortType.DEFAULT);
+        productService.findProductAdvance(criteriaDto);
+
+        verify(elasticsearchOperations).search(any(NativeQuery.class), eq(Product.class));
+    }
+
     private static SearchHits<Product> getSearchHits() {
 
         Product product = Product.builder()
