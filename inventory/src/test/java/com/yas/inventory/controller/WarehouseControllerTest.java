@@ -4,6 +4,7 @@ import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -339,6 +340,13 @@ class WarehouseControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(request))
             .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void testDeleteWarehouse_whenValidRequest_thenReturn204() throws Exception {
+        this.mockMvc.perform(delete("/backoffice/warehouses/1")
+                .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isNoContent());
     }
 
 }
