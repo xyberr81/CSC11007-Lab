@@ -1,0 +1,28 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: yas-order
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: "https://github.com/xyberr81/CSC11007-Lab.git"
+    targetRevision: HEAD
+    path: k8s/charts/order
+    helm:
+      valueFiles:
+        - values.yaml
+      parameters:
+        - name: backend.image.repository
+          value: ghcr.io/nashtech-garage/yas-order
+        - name: backend.image.tag
+          value: latest
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: yas
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
