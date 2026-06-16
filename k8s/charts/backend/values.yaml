@@ -146,3 +146,12 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+hostAliases:
+  - ip: "192.168.49.2"
+    hostnames:
+      - "identity.yas.local.com"
+      - "api.yas.local.com"
+      - "backoffice.yas.local.com"
+      - "storefront.yas.local.com"
+
