@@ -9,7 +9,7 @@ spec:
   project: default
   source:
     repoURL: "https://github.com/xyberr81/CSC11007-Lab.git"
-    targetRevision: HEAD
+    targetRevision: feat/add-argocd-apps
     path: k8s/deploy/argocd-apps
   destination:
     server: "https://kubernetes.default.svc"
