@@ -7,7 +7,7 @@ spec:
   project: default
   sources:
     - repoURL: "https://github.com/xyberr81/CSC11007-Lab.git"
-      targetRevision: feat/add-argocd-apps
+      targetRevision: main
       path: k8s/charts/storefront-ui
       helm:
         valueFiles:
@@ -17,7 +17,7 @@ spec:
           - name: ui.image.repository
             value: ghcr.io/nashtech-garage/yas-storefront
     - repoURL: "https://github.com/xyberr81/CSC11007-Lab.git"
-      targetRevision: feat/add-argocd-apps
+      targetRevision: main
       ref: values
   destination:
     server: "https://kubernetes.default.svc"

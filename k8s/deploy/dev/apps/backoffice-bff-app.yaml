@@ -7,7 +7,7 @@ spec:
   project: default
   sources:
     - repoURL: "https://github.com/xyberr81/CSC11007-Lab.git"
-      targetRevision: feat/add-argocd-apps
+      targetRevision: main
       path: k8s/charts/backoffice-bff
       helm:
         valueFiles:
@@ -17,7 +17,7 @@ spec:
           - name: backend.image.repository
             value: ghcr.io/nashtech-garage/yas-backoffice-bff
     - repoURL: "https://github.com/xyberr81/CSC11007-Lab.git"
-      targetRevision: feat/add-argocd-apps
+      targetRevision: main
       ref: values
   destination:
     server: "https://kubernetes.default.svc"
