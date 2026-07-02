@@ -11,6 +11,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 public class TaxApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(TaxApplication.class, args);
+        SpringApplication.run(TaxApplication.class, args) // THIEU DAU CHAM PHAY
     }
 }
