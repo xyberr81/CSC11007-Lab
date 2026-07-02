@@ -1,0 +1,50 @@
+name: Teardown Dev Environment
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type 'YES' to confirm teardown of yas-dev environment"
+        required: true
+        default: "NO"
+
+jobs:
+  teardown:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Check confirmation
+        run: |
+          if [ "${{ github.event.inputs.confirm }}" != "YES" ]; then
+            echo "You must type 'YES' to confirm teardown. Aborting."
+            exit 1
+          fi
+
+      - name: Configure Kubernetes access
+        uses: azure/k8s-set-context@v3
+        continue-on-error: true
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBECONFIG }}
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: 'v3.12.0'
+
+      - name: Uninstall all Helm releases
+        run: |
+          echo "Bắt đầu xóa toàn bộ các Helm releases trong namespace yas-dev..."
+          
+          SERVICES="storefront-ui storefront-bff backoffice-ui backoffice-bff swagger-ui cart customer inventory location media order payment payment-paypal product promotion rating search tax recommendation webhook sampledata"
+          
+          for chart in $SERVICES; do
+            echo "Đang gỡ bỏ $chart..."
+            helm uninstall $chart -n yas-dev || echo "Không tìm thấy hoặc không thể xóa $chart, bỏ qua."
+          done
+
+      - name: Delete Namespace
+        run: |
+          echo "Tiến hành xóa dứt điểm namespace yas-dev..."
+          kubectl delete namespace yas-dev --ignore-not-found=true || echo "Không thể xóa namespace, vui lòng kiểm tra KUBECONFIG."
+          echo "Hoàn tất kịch bản dọn dẹp!"
