@@ -148,7 +148,7 @@ tolerations: []
 affinity: {}
 
 hostAliases:
-  - ip: "192.168.49.2"
+  - ip: "10.0.133.111"
     hostnames:
       - "identity.yas.local.com"
       - "api.yas.local.com"
