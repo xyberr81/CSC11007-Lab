@@ -7,4 +7,6 @@ read -rd '' REDIS_PASSWORD \
 
 helm install redis \
   --set auth.password="$REDIS_PASSWORD" \
+  --set architecture=standalone \
+  --set master.persistence.enabled=false \
   oci://registry-1.docker.io/bitnamicharts/redis -n redis --create-namespace
