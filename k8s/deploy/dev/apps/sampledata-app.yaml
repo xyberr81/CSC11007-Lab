@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: yas-dev-sampledata
+  namespace: argocd
+spec:
+  project: default
+  sources:
+    - repoURL: "https://github.com/xyberr81/CSC11007-Lab.git"
+      targetRevision: main
+      path: k8s/charts/sampledata
+      helm:
+        valueFiles:
+          - values.yaml
+          - $values/k8s/deploy/dev/values-dev-override.yaml
+        parameters:
+          - name: backend.image.repository
+            value: ghcr.io/nashtech-garage/yas-sampledata
+    - repoURL: "https://github.com/xyberr81/CSC11007-Lab.git"
+      targetRevision: main
+      ref: values
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: yas-dev
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
