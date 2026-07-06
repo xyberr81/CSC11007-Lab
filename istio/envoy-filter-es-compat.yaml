@@ -1,0 +1,38 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  name: downgrade-es-compat-header
+  namespace: yas-dev
+spec:
+  workloadSelector:
+    labels:
+      app.kubernetes.io/name: search
+  configPatches:
+  - applyTo: HTTP_FILTER
+    match:
+      context: SIDECAR_OUTBOUND
+      listener:
+        filterChain:
+          filter:
+            name: "envoy.filters.network.http_connection_manager"
+            subFilter:
+              name: "envoy.filters.http.router"
+    patch:
+      operation: INSERT_BEFORE
+      value:
+        name: envoy.filters.http.lua
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
+          inlineCode: |
+            function envoy_on_request(request_handle)
+              local accept = request_handle:headers():get("Accept")
+              if accept then
+                local new_accept = string.gsub(accept, "compatible%-with=9", "compatible-with=8")
+                request_handle:headers():replace("Accept", new_accept)
+              end
+              local ct = request_handle:headers():get("Content-Type")
+              if ct then
+                local new_ct = string.gsub(ct, "compatible%-with=9", "compatible-with=8")
+                request_handle:headers():replace("Content-Type", new_ct)
+              end
+            end

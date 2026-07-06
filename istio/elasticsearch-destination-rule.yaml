@@ -1,0 +1,10 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: elasticsearch-disable-mtls
+  namespace: yas-dev
+spec:
+  host: "elasticsearch-es-http.elasticsearch.svc.cluster.local"
+  trafficPolicy:
+    tls:
+      mode: DISABLE    # ES pods are not in the mesh (no sidecar), disable mTLS for this host
