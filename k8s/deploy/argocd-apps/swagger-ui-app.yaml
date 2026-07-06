@@ -1,0 +1,28 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: yas-swagger-ui
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: "https://github.com/xyberr81/CSC11007-Lab.git"
+    targetRevision: main
+    path: k8s/charts/swagger-ui
+    helm:
+      valueFiles:
+        - values.yaml
+      parameters:
+        - name: image.repository
+          value: swaggerapi/swagger-ui
+        - name: image.tag
+          value: v4.16.0
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: yas
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
