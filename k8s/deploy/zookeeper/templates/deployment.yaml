@@ -47,12 +47,20 @@ spec:
               containerPort: 2181
               protocol: TCP
           livenessProbe:
+            initialDelaySeconds: 15
+            timeoutSeconds: 10
+            periodSeconds: 15
+            failureThreshold: 5
             exec:
               command:
                 - bash
                 - -c
                 - "(echo ruok | nc localhost 2181) || exit 1"
           readinessProbe:
+            initialDelaySeconds: 15
+            timeoutSeconds: 10
+            periodSeconds: 15
+            failureThreshold: 5
             exec:
               command:
                 - bash
