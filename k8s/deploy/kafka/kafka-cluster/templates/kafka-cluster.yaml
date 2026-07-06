@@ -5,6 +5,16 @@ metadata:
 spec:
   kafka:
     replicas: {{ .Values.kafka.replicas }}
+    livenessProbe:
+      initialDelaySeconds: 60
+      timeoutSeconds: 10
+      periodSeconds: 15
+      failureThreshold: 10
+    readinessProbe:
+      initialDelaySeconds: 60
+      timeoutSeconds: 10
+      periodSeconds: 15
+      failureThreshold: 10
     listeners:
       - name: plain
         port: 9092
@@ -35,6 +45,16 @@ spec:
       min.insync.replicas: 1
   zookeeper:
     replicas: {{ .Values.zookeeper.replicas }}
+    livenessProbe:
+      initialDelaySeconds: 60
+      timeoutSeconds: 10
+      periodSeconds: 15
+      failureThreshold: 10
+    readinessProbe:
+      initialDelaySeconds: 60
+      timeoutSeconds: 10
+      periodSeconds: 15
+      failureThreshold: 10
     storage:
       type: persistent-claim
       size: {{ .Values.zookeeper.storeSize }}
