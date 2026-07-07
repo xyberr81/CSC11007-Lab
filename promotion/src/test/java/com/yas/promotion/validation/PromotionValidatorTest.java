@@ -152,4 +152,34 @@ class PromotionValidatorTest {
 
         assertFalse(isValid);
     }
+
+    @Test
+    void testIsValid_whenDiscountTypeIsPercentageAndDiscountPercentageIs0_isValidFalse() {
+        PromotionDto dto = new PromotionDto();
+        dto.setUsageType(UsageType.UNLIMITED);
+        dto.setDiscountType(DiscountType.PERCENTAGE);
+        dto.setDiscountPercentage(0L);
+        dto.setApplyTo(ApplyTo.PRODUCT);
+        dto.setProductIds(Collections.singletonList(1L));
+
+        ConstraintValidatorContext context = mock(ConstraintValidatorContext.class);
+        boolean isValid = validator.isValid(dto, context);
+
+        assertFalse(isValid);
+    }
+
+    @Test
+    void testIsValid_whenUsageTypeIsUnlimitedAndValidDiscount_isValidTrue() {
+        PromotionDto dto = new PromotionDto();
+        dto.setUsageType(UsageType.UNLIMITED);
+        dto.setDiscountType(DiscountType.PERCENTAGE);
+        dto.setDiscountPercentage(15L);
+        dto.setApplyTo(ApplyTo.BRAND);
+        dto.setBrandIds(Collections.singletonList(5L));
+
+        ConstraintValidatorContext context = mock(ConstraintValidatorContext.class);
+        boolean isValid = validator.isValid(dto, context);
+
+        assertTrue(isValid);
+    }
 }
