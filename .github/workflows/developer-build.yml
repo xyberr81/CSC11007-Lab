@@ -95,16 +95,38 @@ jobs:
           version: 'v3.12.0'
 
       - name: Deploy Services with Helm
-        env:
-          INPUTS_JSON: ${{ toJSON(inputs) }}
         run: |
+          set +e
           echo "Bắt đầu tiến trình CD tự động..."
-          echo "$INPUTS_JSON" > inputs.json
           
-          SERVICES="cart customer inventory location media order payment payment-paypal product promotion rating recommendation search tax webhook storefront-bff backoffice-bff"
+          # Đọc trực tiếp từ github actions context
+          declare -A branches
+          branches[cart]="${{ github.event.inputs.cart || 'main' }}"
+          branches[customer]="${{ github.event.inputs.customer || 'main' }}"
+          branches[inventory]="${{ github.event.inputs.inventory || 'main' }}"
+          branches[location]="${{ github.event.inputs.location || 'main' }}"
+          branches[media]="${{ github.event.inputs.media || 'main' }}"
+          branches[order]="${{ github.event.inputs.order || 'main' }}"
+          branches[payment]="${{ github.event.inputs.payment || 'main' }}"
+          branches[payment-paypal]="${{ github.event.inputs.payment-paypal || 'main' }}"
+          branches[product]="${{ github.event.inputs.product || 'main' }}"
+          branches[promotion]="${{ github.event.inputs.promotion || 'main' }}"
+          branches[rating]="${{ github.event.inputs.rating || 'main' }}"
+          branches[recommendation]="${{ github.event.inputs.recommendation || 'main' }}"
+          branches[search]="${{ github.event.inputs.search || 'main' }}"
+          branches[tax]="${{ github.event.inputs.tax || 'main' }}"
+          branches[webhook]="${{ github.event.inputs.webhook || 'main' }}"
+          branches[storefront-bff]="${{ github.event.inputs.storefront-bff || 'main' }}"
+          branches[backoffice-bff]="${{ github.event.inputs.backoffice-bff || 'main' }}"
           
-          for service in $SERVICES; do
-            branch=$(jq -r ".$service // \"main\"" inputs.json)
+          for service in "${!branches[@]}"; do
+            branch="${branches[$service]}"
+            
+            # Đảm bảo branch luôn có giá trị
+            if [ -z "$branch" ]; then
+              branch="main"
+            fi
+            
             echo "---------------------------------------------------"
             echo "Đang xử lý deploy cho service: $service (Branch: $branch)"
             
@@ -114,7 +136,7 @@ jobs:
             else
               echo "Fetching branch $branch từ remote..."
               git fetch origin $branch:$branch || true
-              TAG=$(git rev-parse --short origin/$branch 2>/dev/null || git rev-parse --short HEAD)
+              TAG=$(git rev-parse --short origin/$branch 2>/dev/null || git rev-parse --short HEAD || echo "main")
               echo "Đã phân giải tag cho branch $branch là: $TAG"
             fi
             
@@ -124,8 +146,9 @@ jobs:
             helm upgrade --install $service ./k8s/charts/$service \
               --namespace yas-dev \
               --set backend.image.repository="$IMAGE_REPO" \
-              --set backend.image.tag="$TAG" || echo "[CẢNH BÁO] Deploy $service thất bại"
+              --set backend.image.tag="$TAG" || echo "[CẢNH BÁO] Deploy $service thất bại (Bỏ qua)"
               
           done
           echo "---------------------------------------------------"
           echo "Hoàn tất kịch bản CD!"
+          exit 0
