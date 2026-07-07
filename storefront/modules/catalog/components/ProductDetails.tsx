@@ -30,6 +30,18 @@ type CurrentSelectedOption = {
   [key: string]: string;
 };
 
+const parseOptionValue = (value?: string) => {
+  if (!value) return {};
+
+  try {
+    const parsedValue = JSON.parse(value);
+    return parsedValue ?? {};
+  } catch (error) {
+    console.error('Invalid product option value payload:', error);
+    return {};
+  }
+};
+
 export default function ProductDetails({
   product,
   productOptions,
@@ -230,9 +242,7 @@ export default function ProductDetails({
             const productOptionPost = productOptionValueGet?.find(
               (productOptionPost) => productOptionPost.productOptionId === productOption.id
             );
-            const parsedValue = productOptionPost?.productOptionValue
-              ? JSON.parse(productOptionPost.productOptionValue)
-              : [];
+            const parsedValue = parseOptionValue(productOptionPost?.productOptionValue);
             return productOptionPost ? (
               <div className="mb-3" key={productOption.name}>
                 <h5 className="mb-2 fs-6">{productOption.name}:</h5>
