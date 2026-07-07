@@ -1,0 +1,44 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: yas-dev-prometheus
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  project: default
+  source:
+    repoURL: "https://prometheus-community.github.io/helm-charts"
+    chart: kube-prometheus-stack
+    targetRevision: 72.6.2
+    helm:
+      values: |
+        prometheus:
+          prometheusSpec:
+            enableRemoteWriteReceiver: true
+        grafana:
+          grafana.ini:
+            database:
+              type: postgres
+              host: postgresql.postgres:5432
+              name: grafana
+              user: yasadminuser
+              password: admin
+              ssl_mode: require
+          adminUser: admin
+          adminPassword: admin
+          ingress:
+            ingressClassName: nginx
+            enabled: true
+            hosts:
+              - grafana.yas.local.com
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: observability
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
