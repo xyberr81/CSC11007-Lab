@@ -9,7 +9,7 @@ spec:
   project: default
   source:
     repoURL: "https://github.com/xyberr81/CSC11007-Lab.git"
-    targetRevision: deploy-observability-argocd
+    targetRevision: main
     path: k8s/deploy/observability/grafana
     helm:
       valueFiles:
