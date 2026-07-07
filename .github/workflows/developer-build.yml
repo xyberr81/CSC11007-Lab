@@ -142,6 +142,9 @@ jobs:
             
             IMAGE_REPO="docker.io/${{ secrets.DOCKERHUB_USERNAME }}/yas-$service"
             
+            echo "Cập nhật dependency cho Helm Chart $service..."
+            helm dependency update ./k8s/charts/$service || echo "Không có dependency hoặc lỗi tải dependency"
+            
             echo "Thực thi lệnh Helm upgrade cho $service..."
             helm upgrade --install $service ./k8s/charts/$service \
               --namespace yas-dev \
