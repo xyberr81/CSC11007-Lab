@@ -1,0 +1,189 @@
+# ── 1. storefront-bff: chỉ storefront-ui và swagger-ui được gọi vào
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-storefront-bff
+  namespace: yas-dev
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: storefront-bff
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        principals:
+        - "cluster.local/ns/yas-dev/sa/storefront-ui"
+        - "cluster.local/ns/yas-dev/sa/yas-dev-swagger-ui"
+---
+# ── 2. backoffice-bff: chỉ backoffice-ui và swagger-ui
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-backoffice-bff
+  namespace: yas-dev
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: backoffice-bff
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        principals:
+        - "cluster.local/ns/yas-dev/sa/backoffice-ui"
+        - "cluster.local/ns/yas-dev/sa/yas-dev-swagger-ui"
+---
+# ── 3. product: BFF hai chiều + order + cart + search + sampledata
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-product
+  namespace: yas-dev
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: product
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        principals:
+        - "cluster.local/ns/yas-dev/sa/storefront-bff"
+        - "cluster.local/ns/yas-dev/sa/backoffice-bff"
+        - "cluster.local/ns/yas-dev/sa/order"
+        - "cluster.local/ns/yas-dev/sa/cart"
+        - "cluster.local/ns/yas-dev/sa/search"
+        - "cluster.local/ns/yas-dev/sa/sampledata"
+---
+# ── 4. cart: storefront-bff (user) + order (checkout flow)
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-cart
+  namespace: yas-dev
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cart
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        principals:
+        - "cluster.local/ns/yas-dev/sa/storefront-bff"
+        - "cluster.local/ns/yas-dev/sa/order"
+---
+# ── 5. order: chỉ hai BFF tạo đơn hàng được phép
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-order
+  namespace: yas-dev
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: order
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        principals:
+        - "cluster.local/ns/yas-dev/sa/storefront-bff"
+        - "cluster.local/ns/yas-dev/sa/backoffice-bff"
+---
+# ── 6. customer: BFF + order (lấy địa chỉ giao hàng) + sampledata
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-customer
+  namespace: yas-dev
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: customer
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        principals:
+        - "cluster.local/ns/yas-dev/sa/storefront-bff"
+        - "cluster.local/ns/yas-dev/sa/backoffice-bff"
+        - "cluster.local/ns/yas-dev/sa/order"
+        - "cluster.local/ns/yas-dev/sa/sampledata"
+---
+# ── 7. inventory: backoffice-bff (quản lý kho) + order + cart + sampledata
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-inventory
+  namespace: yas-dev
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: inventory
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        principals:
+        - "cluster.local/ns/yas-dev/sa/backoffice-bff"
+        - "cluster.local/ns/yas-dev/sa/order"
+        - "cluster.local/ns/yas-dev/sa/cart"
+        - "cluster.local/ns/yas-dev/sa/sampledata"
+---
+# ── 8. tax: BFF (hiển thị giá) + order (tính thuế khi checkout)
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-tax
+  namespace: yas-dev
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: tax
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        principals:
+        - "cluster.local/ns/yas-dev/sa/storefront-bff"
+        - "cluster.local/ns/yas-dev/sa/backoffice-bff"
+        - "cluster.local/ns/yas-dev/sa/order"
+---
+# ── 9. media: BFF upload/xem ảnh + sampledata seed ảnh ban đầu
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-media
+  namespace: yas-dev
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: media
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        principals:
+        - "cluster.local/ns/yas-dev/sa/storefront-bff"
+        - "cluster.local/ns/yas-dev/sa/backoffice-bff"
+        - "cluster.local/ns/yas-dev/sa/sampledata"
+---
+# ── 10. search: hai BFF tìm kiếm sản phẩm
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-search
+  namespace: yas-dev
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: search
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        principals:
+        - "cluster.local/ns/yas-dev/sa/storefront-bff"
+        - "cluster.local/ns/yas-dev/sa/backoffice-bff"
