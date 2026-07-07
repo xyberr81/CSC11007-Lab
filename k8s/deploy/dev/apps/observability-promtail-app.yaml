@@ -15,7 +15,7 @@ spec:
       values: |
         config:
           clients:
-            - url: http://opentelemetry-collector:3500/loki/api/v1/push
+            - url: http://loki-gateway/loki/api/v1/push
           snippets:
             pipelineStages:
               - docker: {}
