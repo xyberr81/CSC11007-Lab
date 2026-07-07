@@ -80,11 +80,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Cần fetch toàn bộ lịch sử để lấy được SHA của branch khác
+          fetch-depth: 0
 
       - name: Configure Kubernetes access
         uses: azure/k8s-set-context@v3
-        # Bước này SẼ BÁO LỖI nếu bạn chưa cấu hình biến KUBECONFIG (Đang chờ Thành viên 2)
         continue-on-error: true 
         with:
           method: kubeconfig
