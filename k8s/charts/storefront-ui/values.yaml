@@ -19,6 +19,8 @@ ui:
   extraEnvs:
     - name: API_BASE_PATH
       value: http://storefront.yas.local.com/api
+    - name: INTERNAL_API_BASE_PATH
+      value: http://storefront-bff/api
   ingress:
     enabled: false
 
