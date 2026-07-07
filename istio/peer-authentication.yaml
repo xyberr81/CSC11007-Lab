@@ -1,0 +1,8 @@
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: yas-dev        # "default" = namespace-wide, apply cho TẤT CẢ services
+spec:
+  mtls:
+    mode: STRICT            # Từ chối mọi plain-text. Chỉ accept mTLS.

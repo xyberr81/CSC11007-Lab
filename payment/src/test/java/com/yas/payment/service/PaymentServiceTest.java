@@ -21,6 +21,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -122,6 +123,27 @@ class PaymentServiceTest {
         assertEquals(capturedPayment.getPaymentMethod(), responseVm.paymentMethod());
         assertEquals(capturedPayment.getPaymentStatus(), responseVm.paymentStatus());
         assertEquals(capturedPayment.getFailureMessage(), responseVm.failureMessage());
+    }
+
+    @Test
+    void capturePayment_UnknownProvider_ShouldThrowIllegalArgumentException() {
+        CapturePaymentRequestVm capturePaymentRequestVM = CapturePaymentRequestVm.builder()
+                .paymentMethod("UNKNOWN_PROVIDER").token("tok").build();
+
+        assertThrows(IllegalArgumentException.class,
+                () -> paymentService.capturePayment(capturePaymentRequestVM));
+    }
+
+    @Test
+    void initPayment_UnknownProvider_ShouldThrowIllegalArgumentException() {
+        InitPaymentRequestVm initPaymentRequestVm = InitPaymentRequestVm.builder()
+                .paymentMethod("UNKNOWN_PROVIDER")
+                .totalPrice(java.math.BigDecimal.TEN)
+                .checkoutId("123")
+                .build();
+
+        assertThrows(IllegalArgumentException.class,
+                () -> paymentService.initPayment(initPaymentRequestVm));
     }
 
 }

@@ -16,3 +16,4 @@ spec:
       count: {{ .Values.elasticsearch.replicas }}
       config:
         node.store.allow_mmap: false
+        rest.compatibility_mode: true   # Allow elastic-java 9.x client to connect to ES 8.x
