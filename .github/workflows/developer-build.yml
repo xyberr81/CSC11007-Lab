@@ -80,11 +80,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Cần fetch toàn bộ lịch sử để lấy được SHA của branch khác
+          fetch-depth: 0
 
       - name: Configure Kubernetes access
         uses: azure/k8s-set-context@v3
-        # Bước này SẼ BÁO LỖI nếu bạn chưa cấu hình biến KUBECONFIG (Đang chờ Thành viên 2)
         continue-on-error: true 
         with:
           method: kubeconfig
@@ -96,16 +95,16 @@ jobs:
           version: 'v3.12.0'
 
       - name: Deploy Services with Helm
+        env:
+          INPUTS_JSON: ${{ toJSON(inputs) }}
         run: |
           echo "Bắt đầu tiến trình CD tự động..."
-          # Đổ toàn bộ inputs từ giao diện vào file JSON
-          echo '${{ toJSON(github.event.inputs) }}' > inputs.json
+          echo "$INPUTS_JSON" > inputs.json
           
-          # Quét qua từng service được khai báo trong input
-          SERVICES=$(jq -r 'keys[]' inputs.json)
+          SERVICES="cart customer inventory location media order payment payment-paypal product promotion rating recommendation search tax webhook storefront-bff backoffice-bff"
           
           for service in $SERVICES; do
-            branch=$(jq -r ".$service" inputs.json)
+            branch=$(jq -r ".$service // \"main\"" inputs.json)
             echo "---------------------------------------------------"
             echo "Đang xử lý deploy cho service: $service (Branch: $branch)"
             
@@ -113,21 +112,19 @@ jobs:
               TAG="main"
               echo "Sử dụng tag mặc định: $TAG"
             else
-              # Lấy short SHA của branch được chỉ định
               echo "Fetching branch $branch từ remote..."
               git fetch origin $branch:$branch || true
-              TAG=$(git rev-parse --short origin/$branch || git rev-parse --short HEAD)
+              TAG=$(git rev-parse --short origin/$branch 2>/dev/null || git rev-parse --short HEAD)
               echo "Đã phân giải tag cho branch $branch là: $TAG"
             fi
             
             IMAGE_REPO="docker.io/${{ secrets.DOCKERHUB_USERNAME }}/yas-$service"
             
             echo "Thực thi lệnh Helm upgrade cho $service..."
-            # Chạy helm upgrade, nếu cluster chưa có thì cài mới (--install)
             helm upgrade --install $service ./k8s/charts/$service \
               --namespace yas-dev \
               --set backend.image.repository="$IMAGE_REPO" \
-              --set backend.image.tag="$TAG" || echo "[CẢNH BÁO] Deploy $service thất bại (Lý do thường gặp: Chưa có KUBECONFIG hoặc Chart sai đường dẫn)"
+              --set backend.image.tag="$TAG" || echo "[CẢNH BÁO] Deploy $service thất bại"
               
           done
           echo "---------------------------------------------------"
