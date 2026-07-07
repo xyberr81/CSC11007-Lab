@@ -1,0 +1,134 @@
+name: Developer Build CD
+
+on:
+  workflow_dispatch:
+    inputs:
+      cart:
+        description: "Branch to deploy for cart"
+        default: "main"
+        required: true
+      customer:
+        description: "Branch to deploy for customer"
+        default: "main"
+        required: true
+      inventory:
+        description: "Branch to deploy for inventory"
+        default: "main"
+        required: true
+      location:
+        description: "Branch to deploy for location"
+        default: "main"
+        required: true
+      media:
+        description: "Branch to deploy for media"
+        default: "main"
+        required: true
+      order:
+        description: "Branch to deploy for order"
+        default: "main"
+        required: true
+      payment:
+        description: "Branch to deploy for payment"
+        default: "main"
+        required: true
+      payment-paypal:
+        description: "Branch to deploy for payment-paypal"
+        default: "main"
+        required: true
+      product:
+        description: "Branch to deploy for product"
+        default: "main"
+        required: true
+      promotion:
+        description: "Branch to deploy for promotion"
+        default: "main"
+        required: true
+      rating:
+        description: "Branch to deploy for rating"
+        default: "main"
+        required: true
+      recommendation:
+        description: "Branch to deploy for recommendation"
+        default: "main"
+        required: true
+      search:
+        description: "Branch to deploy for search"
+        default: "main"
+        required: true
+      tax:
+        description: "Branch to deploy for tax"
+        default: "main"
+        required: true
+      webhook:
+        description: "Branch to deploy for webhook"
+        default: "main"
+        required: true
+      storefront-bff:
+        description: "Branch to deploy for storefront-bff"
+        default: "main"
+        required: true
+      backoffice-bff:
+        description: "Branch to deploy for backoffice-bff"
+        default: "main"
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Cần fetch toàn bộ lịch sử để lấy được SHA của branch khác
+
+      - name: Configure Kubernetes access
+        uses: azure/k8s-set-context@v3
+        # Bước này SẼ BÁO LỖI nếu bạn chưa cấu hình biến KUBECONFIG (Đang chờ Thành viên 2)
+        continue-on-error: true 
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBECONFIG }}
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: 'v3.12.0'
+
+      - name: Deploy Services with Helm
+        run: |
+          echo "Bắt đầu tiến trình CD tự động..."
+          # Đổ toàn bộ inputs từ giao diện vào file JSON
+          echo '${{ toJSON(github.event.inputs) }}' > inputs.json
+          
+          # Quét qua từng service được khai báo trong input
+          SERVICES=$(jq -r 'keys[]' inputs.json)
+          
+          for service in $SERVICES; do
+            branch=$(jq -r ".$service" inputs.json)
+            echo "---------------------------------------------------"
+            echo "Đang xử lý deploy cho service: $service (Branch: $branch)"
+            
+            if [ "$branch" == "main" ] || [ "$branch" == "latest" ]; then
+              TAG="main"
+              echo "Sử dụng tag mặc định: $TAG"
+            else
+              # Lấy short SHA của branch được chỉ định
+              echo "Fetching branch $branch từ remote..."
+              git fetch origin $branch:$branch || true
+              TAG=$(git rev-parse --short origin/$branch || git rev-parse --short HEAD)
+              echo "Đã phân giải tag cho branch $branch là: $TAG"
+            fi
+            
+            IMAGE_REPO="docker.io/${{ secrets.DOCKERHUB_USERNAME }}/yas-$service"
+            
+            echo "Thực thi lệnh Helm upgrade cho $service..."
+            # Chạy helm upgrade, nếu cluster chưa có thì cài mới (--install)
+            helm upgrade --install $service ./k8s/charts/$service \
+              --namespace yas-dev \
+              --set backend.image.repository="$IMAGE_REPO" \
+              --set backend.image.tag="$TAG" || echo "[CẢNH BÁO] Deploy $service thất bại (Lý do thường gặp: Chưa có KUBECONFIG hoặc Chart sai đường dẫn)"
+              
+          done
+          echo "---------------------------------------------------"
+          echo "Hoàn tất kịch bản CD!"
