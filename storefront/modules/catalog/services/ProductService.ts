@@ -10,7 +10,8 @@ import { SimilarProduct } from '../models/SimilarProduct';
 import apiClientService from '@/common/services/ApiClientService';
 
 const baseUrl = '/api/product/storefront';
-const serverSideRenderUrl = `${process.env.API_BASE_PATH}/product/storefront`;
+const serverSideApiBasePath = process.env.INTERNAL_API_BASE_PATH ?? process.env.API_BASE_PATH;
+const serverSideRenderUrl = `${serverSideApiBasePath}/product/storefront`;
 
 export async function getFeaturedProducts(pageNo: number): Promise<ProductFeature> {
   const response = await apiClientService.get(`${baseUrl}/products/featured?pageNo=${pageNo}`);
