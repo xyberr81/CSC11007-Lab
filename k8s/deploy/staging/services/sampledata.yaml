@@ -1,0 +1,4 @@
+backend:
+  image:
+    repository: docker.io/tranan205/yas-sampledata
+    tag: main

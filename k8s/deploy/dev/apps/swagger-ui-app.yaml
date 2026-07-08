@@ -13,11 +13,8 @@ spec:
         valueFiles:
           - values.yaml
           - $values/k8s/deploy/dev/values-dev-override.yaml
+          - $values/k8s/deploy/dev/services/swagger-ui.yaml
         parameters:
-          - name: image.repository
-            value: swaggerapi/swagger-ui
-          - name: image.tag
-            value: v4.16.0
           - name: ingress.host
             value: api.yas.local.com
     - repoURL: "https://github.com/xyberr81/CSC11007-Lab.git"

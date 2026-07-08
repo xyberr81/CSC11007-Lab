@@ -1,0 +1,7 @@
+backend:
+  image:
+    repository: docker.io/tranan205/yas-customer
+    tag: main
+  service:
+    type: NodePort
+    nodePort: 30084

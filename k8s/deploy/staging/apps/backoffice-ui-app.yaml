@@ -13,9 +13,7 @@ spec:
         valueFiles:
           - values.yaml
           - $values/k8s/deploy/staging/values-staging-override.yaml
-        parameters:
-          - name: ui.image.repository
-            value: ghcr.io/nashtech-garage/yas-backoffice
+          - $values/k8s/deploy/staging/services/backoffice-ui.yaml
     - repoURL: "https://github.com/xyberr81/CSC11007-Lab.git"
       targetRevision: main
       ref: values
