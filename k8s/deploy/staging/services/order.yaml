@@ -1,0 +1,4 @@
+backend:
+  image:
+    repository: docker.io/xyberr81/yas-order
+    tag: main
