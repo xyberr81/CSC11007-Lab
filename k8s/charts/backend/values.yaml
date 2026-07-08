@@ -114,6 +114,7 @@ serviceMonitor:
 service:
   type: ClusterIP
   port: 80
+  nodePort:
 
 ingress:
   enabled: false
@@ -158,4 +159,3 @@ hostAliases:
       - "api.yas.local.com"
       - "backoffice.yas.local.com"
       - "storefront.yas.local.com"
-
