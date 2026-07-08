@@ -1,0 +1,7 @@
+ui:
+  image:
+    repository: docker.io/xyberr81/yas-backoffice
+    tag: main
+  service:
+    type: NodePort
+    nodePort: 30082

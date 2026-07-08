@@ -1,0 +1,7 @@
+backend:
+  image:
+    repository: docker.io/xyberr81/yas-media
+    tag: main
+  service:
+    type: NodePort
+    nodePort: 30086

@@ -1,0 +1,4 @@
+ui:
+  image:
+    repository: docker.io/xyberr81/yas-storefront
+    tag: main
