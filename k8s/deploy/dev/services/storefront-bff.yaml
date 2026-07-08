@@ -1,0 +1,9 @@
+backend:
+  image:
+    repository: docker.io/xyberr81/yas-storefront-bff
+    tag: main
+  service:
+    type: NodePort
+    nodePort: 30091
+  ingress:
+    enabled: false
