@@ -1,6 +1,6 @@
 backend:
   image:
-    repository: docker.io/xyberr81/yas-customer
+    repository: docker.io/tranan205/yas-customer
     tag: main
   service:
     type: NodePort

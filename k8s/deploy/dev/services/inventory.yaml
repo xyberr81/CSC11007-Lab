@@ -1,6 +1,6 @@
 backend:
   image:
-    repository: docker.io/xyberr81/yas-inventory
+    repository: docker.io/tranan205/yas-inventory
     tag: main
   service:
     type: NodePort
