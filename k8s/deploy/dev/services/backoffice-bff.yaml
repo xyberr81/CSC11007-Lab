@@ -1,0 +1,9 @@
+backend:
+  image:
+    repository: docker.io/xyberr81/yas-backoffice-bff
+    tag: main
+  service:
+    type: NodePort
+    nodePort: 30081
+  ingress:
+    enabled: false
