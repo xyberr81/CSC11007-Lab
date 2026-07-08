@@ -9,19 +9,8 @@ spec:
   gateways:
     - yas-dev-public-gateway
   http:
-    - match:
-        - uri:
-            prefix: /api
-      route:
+    - route:
         - destination:
             host: backoffice-bff
             port:
               number: 80
-    - match:
-        - uri:
-            prefix: /
-      route:
-        - destination:
-            host: backoffice-ui
-            port:
-              number: 3000
