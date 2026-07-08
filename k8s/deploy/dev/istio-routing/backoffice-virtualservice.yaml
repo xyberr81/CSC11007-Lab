@@ -1,0 +1,27 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: backoffice-public-routes
+  namespace: yas-dev
+spec:
+  hosts:
+    - backoffice.yas.local.com
+  gateways:
+    - yas-dev-public-gateway
+  http:
+    - match:
+        - uri:
+            prefix: /api
+      route:
+        - destination:
+            host: backoffice-bff
+            port:
+              number: 80
+    - match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            host: backoffice-ui
+            port:
+              number: 3000
