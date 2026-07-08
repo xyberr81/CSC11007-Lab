@@ -4,3 +4,5 @@ image:
 service:
   type: NodePort
   nodePort: 30093
+ingress:
+  enabled: false

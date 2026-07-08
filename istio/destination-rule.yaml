@@ -1,0 +1,358 @@
+# ── DEFAULT: Baseline cho toàn bộ services trong namespace ────────────────
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: default
+  namespace: yas-dev
+spec:
+  host: "*.yas-dev.svc.cluster.local"
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL               # Client dùng cert do Istio quản lý
+    loadBalancer:
+      simple: LEAST_REQUEST            # Gửi tới server ít request nhất
+    connectionPool:
+      http:
+        http1MaxPendingRequests: 100   # Hàng chờ HTTP/1.1 tối đa
+        http2MaxRequests: 1000         # Tổng concurrent HTTP/2 requests
+        maxRequestsPerConnection: 10   # Buộc reconnect sau 10 req (tránh hot connection)
+        idleTimeout: 60s               # Đóng connection idle sau 60 giây
+      tcp:
+        maxConnections: 100            # Tổng TCP connections tối đa
+        connectTimeout: 3s             # Timeout kết nối TCP
+    outlierDetection:                  # Circuit breaker – eject pod lỗi
+      consecutive5xxErrors: 5          # Eject sau 5 lỗi 5xx liên tiếp
+      interval: 30s                    # Kiểm tra mỗi 30 giây
+      baseEjectionTime: 30s            # Thời gian eject tối thiểu
+      maxEjectionPercent: 50           # Eject tối đa 50% số pod (giữ 1 pod luôn phục vụ)
+      minHealthPercent: 50             # Bật circuit breaker khi ≥50% pod còn healthy
+---
+# ── STOREFRONT-BFF: Gateway vào hệ thống phía khách hàng ─────────────────
+#    Traffic cao (user-facing), cần connection pool rộng hơn default
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: storefront-bff
+  namespace: yas-dev
+spec:
+  host: storefront-bff.yas-dev.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+    loadBalancer:
+      simple: LEAST_REQUEST
+    connectionPool:
+      http:
+        http1MaxPendingRequests: 200   # BFF chịu nhiều traffic hơn backend service
+        http2MaxRequests: 2000
+        maxRequestsPerConnection: 10
+        idleTimeout: 60s
+      tcp:
+        maxConnections: 200
+        connectTimeout: 3s
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+      minHealthPercent: 50
+---
+# ── BACKOFFICE-BFF: Gateway cho admin/backoffice ──────────────────────────
+#    Traffic thấp hơn storefront nhưng vẫn cần circuit breaker
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: backoffice-bff
+  namespace: yas-dev
+spec:
+  host: backoffice-bff.yas-dev.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+    loadBalancer:
+      simple: LEAST_REQUEST
+    connectionPool:
+      http:
+        http1MaxPendingRequests: 100
+        http2MaxRequests: 1000
+        maxRequestsPerConnection: 10
+        idleTimeout: 60s
+      tcp:
+        maxConnections: 100
+        connectTimeout: 3s
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+      minHealthPercent: 50
+---
+# ── ORDER: Critical path – xử lý đơn hàng, cần circuit breaker chặt ──────
+#    Lỗi ở đây ảnh hưởng trực tiếp doanh thu → eject nhanh hơn
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: order
+  namespace: yas-dev
+spec:
+  host: order.yas-dev.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+    loadBalancer:
+      simple: LEAST_REQUEST
+    connectionPool:
+      http:
+        http1MaxPendingRequests: 100
+        http2MaxRequests: 1000
+        maxRequestsPerConnection: 10
+        idleTimeout: 60s
+      tcp:
+        maxConnections: 100
+        connectTimeout: 3s
+    outlierDetection:
+      consecutive5xxErrors: 3          # Chặt hơn: eject sau chỉ 3 lỗi
+      consecutiveGatewayErrors: 3      # Cũng eject khi gặp gateway error
+      interval: 10s                    # Kiểm tra thường xuyên hơn (10s)
+      baseEjectionTime: 60s            # Eject lâu hơn (60s) để service tự hồi phục
+      maxEjectionPercent: 50
+      minHealthPercent: 50
+---
+# ── CART: Liên quan chặt với order, cần circuit breaker tương tự ──────────
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: cart
+  namespace: yas-dev
+spec:
+  host: cart.yas-dev.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+    loadBalancer:
+      simple: LEAST_REQUEST
+    connectionPool:
+      http:
+        http1MaxPendingRequests: 100
+        http2MaxRequests: 1000
+        maxRequestsPerConnection: 10
+        idleTimeout: 60s
+      tcp:
+        maxConnections: 100
+        connectTimeout: 3s
+    outlierDetection:
+      consecutive5xxErrors: 3
+      consecutiveGatewayErrors: 3
+      interval: 10s
+      baseEjectionTime: 60s
+      maxEjectionPercent: 50
+      minHealthPercent: 50
+---
+# ── PRODUCT: Read-heavy service, cần throughput cao ───────────────────────
+#    Được gọi bởi nhiều service khác (order, cart, search, BFF)
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: product
+  namespace: yas-dev
+spec:
+  host: product.yas-dev.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+    loadBalancer:
+      simple: LEAST_REQUEST
+    connectionPool:
+      http:
+        http1MaxPendingRequests: 200   # Chịu nhiều request đọc hơn
+        http2MaxRequests: 2000
+        maxRequestsPerConnection: 10
+        idleTimeout: 60s
+      tcp:
+        maxConnections: 200
+        connectTimeout: 3s
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+      minHealthPercent: 50
+---
+# ── INVENTORY: Write-heavy (cập nhật tồn kho), cần circuit breaker ────────
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: inventory
+  namespace: yas-dev
+spec:
+  host: inventory.yas-dev.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+    loadBalancer:
+      simple: LEAST_REQUEST
+    connectionPool:
+      http:
+        http1MaxPendingRequests: 100
+        http2MaxRequests: 1000
+        maxRequestsPerConnection: 10
+        idleTimeout: 60s
+      tcp:
+        maxConnections: 100
+        connectTimeout: 3s
+    outlierDetection:
+      consecutive5xxErrors: 3
+      consecutiveGatewayErrors: 3
+      interval: 10s
+      baseEjectionTime: 60s
+      maxEjectionPercent: 50
+      minHealthPercent: 50
+---
+# ── CUSTOMER: Chứa thông tin nhạy cảm, baseline là đủ ────────────────────
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: customer
+  namespace: yas-dev
+spec:
+  host: customer.yas-dev.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+    loadBalancer:
+      simple: LEAST_REQUEST
+    connectionPool:
+      http:
+        http1MaxPendingRequests: 100
+        http2MaxRequests: 1000
+        maxRequestsPerConnection: 10
+        idleTimeout: 60s
+      tcp:
+        maxConnections: 100
+        connectTimeout: 3s
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+      minHealthPercent: 50
+---
+# ── PAYMENT: Yêu cầu timeout dài hơn (external payment gateway) ───────────
+#    Không eject quá nhanh vì payment thường chậm hơn (tích hợp bên ngoài)
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: payment
+  namespace: yas-dev
+spec:
+  host: payment.yas-dev.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+    loadBalancer:
+      simple: LEAST_REQUEST
+    connectionPool:
+      http:
+        http1MaxPendingRequests: 50    # Payment ít request hơn nhưng latency cao hơn
+        http2MaxRequests: 500
+        maxRequestsPerConnection: 5
+        idleTimeout: 90s               # Giữ connection lâu hơn (payment cần thời gian)
+      tcp:
+        maxConnections: 50
+        connectTimeout: 5s             # Timeout kết nối lâu hơn cho payment gateway
+    outlierDetection:
+      consecutive5xxErrors: 5          # Không eject quá nhanh
+      interval: 60s                    # Kiểm tra thưa hơn (60s) vì latency cao
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+      minHealthPercent: 50
+---
+# ── TAX: Stateless calculation service, baseline là đủ ───────────────────
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: tax
+  namespace: yas-dev
+spec:
+  host: tax.yas-dev.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+    loadBalancer:
+      simple: LEAST_REQUEST
+    connectionPool:
+      http:
+        http1MaxPendingRequests: 100
+        http2MaxRequests: 1000
+        maxRequestsPerConnection: 10
+        idleTimeout: 60s
+      tcp:
+        maxConnections: 100
+        connectTimeout: 3s
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+      minHealthPercent: 50
+---
+# ── MEDIA: Upload/download file, connection pool rộng hơn ────────────────
+#    Request lâu hơn do truyền file, cần idleTimeout cao hơn
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: media
+  namespace: yas-dev
+spec:
+  host: media.yas-dev.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+    loadBalancer:
+      simple: LEAST_REQUEST
+    connectionPool:
+      http:
+        http1MaxPendingRequests: 100
+        http2MaxRequests: 500
+        maxRequestsPerConnection: 5
+        idleTimeout: 120s              # File upload/download cần giữ connection lâu
+      tcp:
+        maxConnections: 100
+        connectTimeout: 5s
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+      minHealthPercent: 50
+---
+# ── SEARCH: Read-heavy, latency thấp quan trọng ──────────────────────────
+#    Elasticsearch-backed → circuit breaker chặt để fail fast
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: search
+  namespace: yas-dev
+spec:
+  host: search.yas-dev.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+    loadBalancer:
+      simple: LEAST_REQUEST
+    connectionPool:
+      http:
+        http1MaxPendingRequests: 200
+        http2MaxRequests: 2000
+        maxRequestsPerConnection: 10
+        idleTimeout: 60s
+      tcp:
+        maxConnections: 200
+        connectTimeout: 3s
+    outlierDetection:
+      consecutive5xxErrors: 3          # Fail fast khi ES có vấn đề
+      consecutiveGatewayErrors: 3
+      interval: 10s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+      minHealthPercent: 50

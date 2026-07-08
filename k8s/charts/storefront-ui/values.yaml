@@ -1,6 +1,6 @@
 ui:
   image:
-    repository: ghcr.io/nashtech-garage/yas-storefront
+    repository: docker.io/tranan205/yas-storefront
     tag: latest
   nameOverride: storefront-ui
   fullnameOverride: storefront-ui
@@ -21,6 +21,13 @@ ui:
       value: http://storefront.yas.local.com/api
     - name: INTERNAL_API_BASE_PATH
       value: http://storefront-bff/api
+  hostAliases:
+    - ip: "10.0.99.80"
+      hostnames:
+        - storefront.yas.local.com
+        - backoffice.yas.local.com
+        - api.yas.local.com
+        - identity.yas.local.com
   ingress:
     enabled: false
 

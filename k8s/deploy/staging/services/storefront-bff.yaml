@@ -1,4 +1,4 @@
 backend:
   image:
-    repository: docker.io/xyberr81/yas-storefront-bff
+    repository: docker.io/tranan205/yas-storefront-bff
     tag: main

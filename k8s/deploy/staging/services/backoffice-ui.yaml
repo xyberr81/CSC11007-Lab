@@ -1,4 +1,4 @@
 ui:
   image:
-    repository: docker.io/xyberr81/yas-backoffice
+    repository: docker.io/tranan205/yas-backoffice
     tag: main
