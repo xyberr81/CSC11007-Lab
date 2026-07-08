@@ -16,7 +16,7 @@ spec:
           - $values/k8s/deploy/staging/services/swagger-ui.yaml
         parameters:
           - name: ingress.host
-            value: staging-api.yas.local.com
+            value: api.staging.yas.local.com
     - repoURL: "https://github.com/xyberr81/CSC11007-Lab.git"
       targetRevision: main
       ref: values

@@ -1,3 +1,15 @@
 backend:
   ingress:
-    host: api.yas.local.com
+    host: api.dev.yas.local.com
+applicationConfig:
+  springdoc:
+    oauthflow:
+      authorization-url: http://identity.yas.local.com/realms/Yas/protocol/openid-connect/auth
+      token-url: http://identity.yas.local.com/realms/Yas/protocol/openid-connect/token
+mediaApplicationConfig:
+  yas:
+    publicUrl: http://api.dev.yas.local.com/media
+paymentPaypalApplicationConfig:
+  yas:
+    public:
+      url: http://storefront.dev.yas.local.com/complete-payment
