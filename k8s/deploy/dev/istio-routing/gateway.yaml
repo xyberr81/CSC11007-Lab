@@ -12,7 +12,7 @@ spec:
         name: http
         protocol: HTTP
       hosts:
-        - storefront.yas.local.com
-        - backoffice.yas.local.com
-        - api.yas.local.com
+        - storefront.dev.yas.local.com
+        - backoffice.dev.yas.local.com
+        - api.dev.yas.local.com
         - identity.yas.local.com
