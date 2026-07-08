@@ -1,6 +1,37 @@
 backend:
+  affinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          preference:
+            matchExpressions:
+              - key: kubernetes.azure.com/agentpool
+                operator: In
+                values:
+                  - nodepool1
   ingress:
     host: api.dev.yas.local.com
+ui:
+  affinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          preference:
+            matchExpressions:
+              - key: kubernetes.azure.com/agentpool
+                operator: In
+                values:
+                  - nodepool1
+affinity:
+  nodeAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        preference:
+          matchExpressions:
+            - key: kubernetes.azure.com/agentpool
+              operator: In
+              values:
+                - nodepool1
 applicationConfig:
   springdoc:
     oauthflow:
