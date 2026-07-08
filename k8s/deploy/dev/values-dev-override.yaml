@@ -1,9 +1,3 @@
 backend:
-  image:
-    tag: latest  # Placeholder tag for dev; to be updated by CI pipeline
   ingress:
     host: api.yas.local.com
-
-ui:
-  image:
-    tag: latest  # Placeholder tag for dev
