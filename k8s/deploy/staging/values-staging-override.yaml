@@ -1,9 +1,3 @@
 backend:
-  image:
-    tag: latest  # Placeholder tag for staging
   ingress:
     host: staging-api.yas.local.com
-
-ui:
-  image:
-    tag: latest  # Placeholder tag for staging
