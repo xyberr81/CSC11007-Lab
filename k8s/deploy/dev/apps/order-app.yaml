@@ -13,9 +13,7 @@ spec:
         valueFiles:
           - values.yaml
           - $values/k8s/deploy/dev/values-dev-override.yaml
-        parameters:
-          - name: backend.image.repository
-            value: ghcr.io/nashtech-garage/yas-order
+          - $values/k8s/deploy/dev/services/order.yaml
     - repoURL: "https://github.com/xyberr81/CSC11007-Lab.git"
       targetRevision: main
       ref: values
