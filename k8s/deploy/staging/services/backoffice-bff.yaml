@@ -2,3 +2,5 @@ backend:
   image:
     repository: docker.io/tranan205/yas-backoffice-bff
     tag: main
+  ingress:
+    host: backoffice.staging.yas.local.com
