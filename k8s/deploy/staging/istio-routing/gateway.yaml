@@ -1,0 +1,18 @@
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: yas-staging-public-gateway
+  namespace: yas-staging
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - storefront.staging.yas.local.com
+        - backoffice.staging.yas.local.com
+        - api.staging.yas.local.com
+        - identity.yas.local.com
