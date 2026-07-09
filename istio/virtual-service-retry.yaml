@@ -2,7 +2,7 @@ apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
   name: order-retry
-  namespace: yas-dev
+  namespace: yas-staging
 spec:
   hosts:
   - order
@@ -13,13 +13,13 @@ spec:
     retries:
       attempts: 3
       perTryTimeout: 2s
-      retryOn: "5xx,connect-failure,refused-stream,retriable-4xx"
+      retryOn: "401,5xx,connect-failure,refused-stream,retriable-4xx"
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
   name: cart-retry
-  namespace: yas-dev
+  namespace: yas-staging
 spec:
   hosts:
   - cart
@@ -36,7 +36,7 @@ apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
   name: product-retry
-  namespace: yas-dev
+  namespace: yas-staging
 spec:
   hosts:
   - product
@@ -53,7 +53,7 @@ apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
   name: inventory-retry
-  namespace: yas-dev
+  namespace: yas-staging
 spec:
   hosts:
   - inventory
@@ -70,7 +70,7 @@ apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
   name: customer-retry
-  namespace: yas-dev
+  namespace: yas-staging
 spec:
   hosts:
   - customer
@@ -87,7 +87,7 @@ apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
   name: tax-retry
-  namespace: yas-dev
+  namespace: yas-staging
 spec:
   hosts:
   - tax
@@ -104,7 +104,7 @@ apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
   name: media-retry
-  namespace: yas-dev
+  namespace: yas-staging
 spec:
   hosts:
   - media
@@ -121,7 +121,7 @@ apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
   name: search-retry
-  namespace: yas-dev
+  namespace: yas-staging
 spec:
   hosts:
   - search
