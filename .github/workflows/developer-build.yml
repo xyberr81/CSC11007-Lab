@@ -1,8 +1,19 @@
 name: Developer Build CD
 
+permissions:
+  contents: read
+
 on:
   workflow_dispatch:
     inputs:
+      backoffice:
+        description: "Branch to deploy for backoffice UI"
+        default: "main"
+        required: true
+      backoffice-bff:
+        description: "Branch to deploy for backoffice-bff"
+        default: "main"
+        required: true
       cart:
         description: "Branch to deploy for cart"
         default: "main"
@@ -15,10 +26,6 @@ on:
         description: "Branch to deploy for inventory"
         default: "main"
         required: true
-      location:
-        description: "Branch to deploy for location"
-        default: "main"
-        required: true
       media:
         description: "Branch to deploy for media"
         default: "main"
@@ -27,131 +34,152 @@ on:
         description: "Branch to deploy for order"
         default: "main"
         required: true
-      payment:
-        description: "Branch to deploy for payment"
-        default: "main"
-        required: true
-      payment-paypal:
-        description: "Branch to deploy for payment-paypal"
-        default: "main"
-        required: true
       product:
         description: "Branch to deploy for product"
         default: "main"
         required: true
-      promotion:
-        description: "Branch to deploy for promotion"
-        default: "main"
-        required: true
-      rating:
-        description: "Branch to deploy for rating"
-        default: "main"
-        required: true
-      recommendation:
-        description: "Branch to deploy for recommendation"
+      sampledata:
+        description: "Branch to deploy for sampledata"
         default: "main"
         required: true
       search:
         description: "Branch to deploy for search"
         default: "main"
         required: true
-      tax:
-        description: "Branch to deploy for tax"
-        default: "main"
-        required: true
-      webhook:
-        description: "Branch to deploy for webhook"
+      storefront:
+        description: "Branch to deploy for storefront UI"
         default: "main"
         required: true
       storefront-bff:
         description: "Branch to deploy for storefront-bff"
         default: "main"
         required: true
-      backoffice-bff:
-        description: "Branch to deploy for backoffice-bff"
+      tax:
+        description: "Branch to deploy for tax"
         default: "main"
         required: true
 
 jobs:
-  deploy:
+  developer-build:
     runs-on: ubuntu-latest
-    
     steps:
-      - name: Checkout code
+      - name: Create GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.GH_APP_ID }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
 
-      - name: Configure Kubernetes access
-        uses: azure/k8s-set-context@v3
-        continue-on-error: true 
+      - name: Prepare helper scripts
+        run: chmod +x scripts/resolve_branch_tag.sh scripts/check_dockerhub_image.sh scripts/update_gitops_values.sh
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
         with:
-          method: kubeconfig
-          kubeconfig: ${{ secrets.KUBECONFIG }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Setup Helm
-        uses: azure/setup-helm@v3
-        with:
-          version: 'v3.12.0'
-
-      - name: Deploy Services with Helm
+      - name: Resolve tags, verify images, and update GitOps manifests
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          BRANCH_BACKOFFICE: ${{ github.event.inputs.backoffice }}
+          BRANCH_BACKOFFICE_BFF: ${{ github.event.inputs['backoffice-bff'] }}
+          BRANCH_CART: ${{ github.event.inputs.cart }}
+          BRANCH_CUSTOMER: ${{ github.event.inputs.customer }}
+          BRANCH_INVENTORY: ${{ github.event.inputs.inventory }}
+          BRANCH_MEDIA: ${{ github.event.inputs.media }}
+          BRANCH_ORDER: ${{ github.event.inputs.order }}
+          BRANCH_PRODUCT: ${{ github.event.inputs.product }}
+          BRANCH_SAMPLEDATA: ${{ github.event.inputs.sampledata }}
+          BRANCH_SEARCH: ${{ github.event.inputs.search }}
+          BRANCH_STOREFRONT: ${{ github.event.inputs.storefront }}
+          BRANCH_STOREFRONT_BFF: ${{ github.event.inputs['storefront-bff'] }}
+          BRANCH_TAX: ${{ github.event.inputs.tax }}
         run: |
-          set +e
-          echo "Bắt đầu tiến trình CD tự động..."
-          
-          # Đọc trực tiếp từ github actions context
-          declare -A branches
-          branches[cart]="${{ github.event.inputs.cart || 'main' }}"
-          branches[customer]="${{ github.event.inputs.customer || 'main' }}"
-          branches[inventory]="${{ github.event.inputs.inventory || 'main' }}"
-          branches[location]="${{ github.event.inputs.location || 'main' }}"
-          branches[media]="${{ github.event.inputs.media || 'main' }}"
-          branches[order]="${{ github.event.inputs.order || 'main' }}"
-          branches[payment]="${{ github.event.inputs.payment || 'main' }}"
-          branches[payment-paypal]="${{ github.event.inputs.payment-paypal || 'main' }}"
-          branches[product]="${{ github.event.inputs.product || 'main' }}"
-          branches[promotion]="${{ github.event.inputs.promotion || 'main' }}"
-          branches[rating]="${{ github.event.inputs.rating || 'main' }}"
-          branches[recommendation]="${{ github.event.inputs.recommendation || 'main' }}"
-          branches[search]="${{ github.event.inputs.search || 'main' }}"
-          branches[tax]="${{ github.event.inputs.tax || 'main' }}"
-          branches[webhook]="${{ github.event.inputs.webhook || 'main' }}"
-          branches[storefront-bff]="${{ github.event.inputs.storefront-bff || 'main' }}"
-          branches[backoffice-bff]="${{ github.event.inputs.backoffice-bff || 'main' }}"
-          
-          for service in "${!branches[@]}"; do
+          set -euo pipefail
+
+          declare -A branches=(
+            [backoffice]="${BRANCH_BACKOFFICE}"
+            [backoffice-bff]="${BRANCH_BACKOFFICE_BFF}"
+            [cart]="${BRANCH_CART}"
+            [customer]="${BRANCH_CUSTOMER}"
+            [inventory]="${BRANCH_INVENTORY}"
+            [media]="${BRANCH_MEDIA}"
+            [order]="${BRANCH_ORDER}"
+            [product]="${BRANCH_PRODUCT}"
+            [sampledata]="${BRANCH_SAMPLEDATA}"
+            [search]="${BRANCH_SEARCH}"
+            [storefront]="${BRANCH_STOREFRONT}"
+            [storefront-bff]="${BRANCH_STOREFRONT_BFF}"
+            [tax]="${BRANCH_TAX}"
+          )
+
+          services=(
+            backoffice
+            backoffice-bff
+            cart
+            customer
+            inventory
+            media
+            order
+            product
+            sampledata
+            search
+            storefront
+            storefront-bff
+            tax
+          )
+
+          {
+            echo "## Developer Build Summary"
+            echo
+            echo "| Service | Branch | Deploy Tag | Manifest |"
+            echo "| --- | --- | --- | --- |"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+          for service in "${services[@]}"; do
             branch="${branches[$service]}"
-            
-            # Đảm bảo branch luôn có giá trị
-            if [ -z "$branch" ]; then
-              branch="main"
-            fi
-            
-            echo "---------------------------------------------------"
-            echo "Đang xử lý deploy cho service: $service (Branch: $branch)"
-            
-            if [ "$branch" == "main" ] || [ "$branch" == "latest" ]; then
-              TAG="main"
-              echo "Sử dụng tag mặc định: $TAG"
-            else
-              echo "Fetching branch $branch từ remote..."
-              git fetch origin $branch:$branch || true
-              TAG=$(git rev-parse --short origin/$branch 2>/dev/null || git rev-parse --short HEAD || echo "main")
-              echo "Đã phân giải tag cho branch $branch là: $TAG"
-            fi
-            
-            IMAGE_REPO="docker.io/${{ secrets.DOCKERHUB_USERNAME }}/yas-$service"
-            
-            echo "Cập nhật dependency cho Helm Chart $service..."
-            helm dependency update ./k8s/charts/$service || echo "Không có dependency hoặc lỗi tải dependency"
-            
-            echo "Thực thi lệnh Helm upgrade cho $service..."
-            helm upgrade --install $service ./k8s/charts/$service \
-              --namespace yas-dev \
-              --set backend.image.repository="$IMAGE_REPO" \
-              --set backend.image.tag="$TAG" || echo "[CẢNH BÁO] Deploy $service thất bại (Bỏ qua)"
-              
+            deploy_tag="$(./scripts/resolve_branch_tag.sh "$branch")"
+
+            case "$service" in
+              storefront)
+                image_name="yas-storefront"
+                manifest_name="storefront-ui.yaml"
+                ;;
+              backoffice)
+                image_name="yas-backoffice"
+                manifest_name="backoffice-ui.yaml"
+                ;;
+              *)
+                image_name="yas-${service}"
+                manifest_name="${service}.yaml"
+                ;;
+            esac
+
+            image_repository="docker.io/${DOCKERHUB_USERNAME}/${image_name}"
+            ./scripts/check_dockerhub_image.sh "${image_repository}" "${deploy_tag}"
+            ./scripts/update_gitops_values.sh "${service}" "${DOCKERHUB_USERNAME}" "${deploy_tag}"
+
+            echo "| ${service} | ${branch} | ${deploy_tag} | ${manifest_name} |" >> "${GITHUB_STEP_SUMMARY}"
           done
-          echo "---------------------------------------------------"
-          echo "Hoàn tất kịch bản CD!"
-          exit 0
+
+      - name: Commit and push GitOps updates
+        run: |
+          set -euo pipefail
+
+          if git diff --quiet -- k8s/deploy/dev/services; then
+            echo "No GitOps changes were required."
+            exit 0
+          fi
+
+          git config user.name "yas-gitops-bot"
+          git config user.email "yas-gitops-bot@users.noreply.github.com"
+          git add k8s/deploy/dev/services
+          git commit -m "chore(gitops): update dev image tags [skip gitops ci]"
+          git push origin HEAD:main
