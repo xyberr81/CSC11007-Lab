@@ -13,11 +13,14 @@ spec:
     targetRevision: 6.29.0
     helm:
       values: |
-        write:
-          replicas: 1
-        read:
-          replicas: 1
         backend:
+          replicas: 0
+        read:
+          replicas: 0
+        write:
+          replicas: 0
+        deploymentMode: SingleBinary
+        singleBinary:
           replicas: 1
         loki:
           useTestSchema: true
@@ -26,10 +29,12 @@ spec:
           auth_enabled: false
         test:
           enabled: false
-        storage:
-          type: filesystem
         minio:
-          enabled: true
+          enabled: false
+        chunksCache:
+          enabled: false
+        resultsCache:
+          enabled: false
         monitoring:
           selfMonitoring:
             enabled: false
