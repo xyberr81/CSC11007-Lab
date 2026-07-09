@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: yas-staging-promtail
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  project: default
+  source:
+    repoURL: "https://grafana.github.io/helm-charts"
+    chart: promtail
+    targetRevision: 6.16.6
+    helm:
+      values: |
+        config:
+          clients:
+            - url: http://loki-gateway/loki/api/v1/push
+          snippets:
+            pipelineStages:
+              - docker: {}
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: observability
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
