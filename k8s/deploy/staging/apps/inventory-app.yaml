@@ -3,6 +3,8 @@ kind: Application
 metadata:
   name: yas-staging-inventory
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
 spec:
   project: default
   sources:
@@ -21,8 +23,5 @@ spec:
     server: "https://kubernetes.default.svc"
     namespace: yas-staging
   syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
     syncOptions:
       - CreateNamespace=true
