@@ -37,6 +37,7 @@ public class SecurityConfig {
         return http
             .authorizeExchange(auth -> auth
                 .pathMatchers("/health", "/actuator/prometheus", "/actuator/health/**").permitAll()
+                .pathMatchers("/authentication/**").permitAll()
                 .anyExchange().hasAnyRole("ADMIN"))
             .oauth2Login(Customizer.withDefaults())
             .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
