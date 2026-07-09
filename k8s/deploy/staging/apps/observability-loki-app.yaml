@@ -14,16 +14,12 @@ spec:
     helm:
       values: |
         backend:
-          replicas: 0
+          replicas: 1
         read:
-          replicas: 0
+          replicas: 1
         write:
-          replicas: 0
-        deploymentMode: SingleBinary
-        singleBinary:
           replicas: 1
         loki:
-          useTestSchema: true
           commonConfig:
             replication_factor: 1
           auth_enabled: false
@@ -34,9 +30,21 @@ spec:
         minio:
           enabled: false
         chunksCache:
-          enabled: false
+          enabled: true
+          resources:
+            requests:
+              cpu: 50m
+              memory: 256Mi
+            limits:
+              memory: 512Mi
         resultsCache:
-          enabled: false
+          enabled: true
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              memory: 256Mi
         monitoring:
           selfMonitoring:
             enabled: false
