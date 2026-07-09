@@ -2,6 +2,10 @@ hostname: grafana.yas.local.com
 grafana:
   username: admin
   password: admin
+  externalUrl: http://prometheus-grafana
+  datasources:
+    lokiUrl: http://loki-gateway
+    tempoUrl: http://tempo:3100
 postgresql:
   url: postgresql.postgres:5432
   username: yasadminuser
