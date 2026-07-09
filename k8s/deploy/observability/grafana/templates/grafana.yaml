@@ -6,7 +6,7 @@ metadata:
     dashboards: "grafana"
 spec:
   external:
-    url: http://prometheus-grafana
+    url: {{ .Values.grafana.externalUrl }}
     adminPassword:
       name: grafana-admin-credentials
       key: password
