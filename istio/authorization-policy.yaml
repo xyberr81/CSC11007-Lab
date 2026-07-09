@@ -3,7 +3,7 @@ apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
   name: allow-storefront-bff
-  namespace: yas-dev
+  namespace: yas-staging
 spec:
   selector:
     matchLabels:
@@ -13,15 +13,15 @@ spec:
   - from:
     - source:
         principals:
-        - "cluster.local/ns/yas-dev/sa/storefront-ui"
-        - "cluster.local/ns/yas-dev/sa/yas-dev-swagger-ui"
+        - "cluster.local/ns/yas-staging/sa/storefront-ui"
+        - "cluster.local/ns/yas-staging/sa/yas-staging-swagger-ui"
 ---
 # ── 2. backoffice-bff: chỉ backoffice-ui và swagger-ui
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
   name: allow-backoffice-bff
-  namespace: yas-dev
+  namespace: yas-staging
 spec:
   selector:
     matchLabels:
@@ -31,15 +31,15 @@ spec:
   - from:
     - source:
         principals:
-        - "cluster.local/ns/yas-dev/sa/backoffice-ui"
-        - "cluster.local/ns/yas-dev/sa/yas-dev-swagger-ui"
+        - "cluster.local/ns/yas-staging/sa/backoffice-ui"
+        - "cluster.local/ns/yas-staging/sa/yas-staging-swagger-ui"
 ---
 # ── 3. product: BFF hai chiều + order + cart + search + sampledata
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
   name: allow-product
-  namespace: yas-dev
+  namespace: yas-staging
 spec:
   selector:
     matchLabels:
@@ -49,19 +49,19 @@ spec:
   - from:
     - source:
         principals:
-        - "cluster.local/ns/yas-dev/sa/storefront-bff"
-        - "cluster.local/ns/yas-dev/sa/backoffice-bff"
-        - "cluster.local/ns/yas-dev/sa/order"
-        - "cluster.local/ns/yas-dev/sa/cart"
-        - "cluster.local/ns/yas-dev/sa/search"
-        - "cluster.local/ns/yas-dev/sa/sampledata"
+        - "cluster.local/ns/yas-staging/sa/storefront-bff"
+        - "cluster.local/ns/yas-staging/sa/backoffice-bff"
+        - "cluster.local/ns/yas-staging/sa/order"
+        - "cluster.local/ns/yas-staging/sa/cart"
+        - "cluster.local/ns/yas-staging/sa/search"
+        - "cluster.local/ns/yas-staging/sa/sampledata"
 ---
 # ── 4. cart: storefront-bff (user) + order (checkout flow)
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
   name: allow-cart
-  namespace: yas-dev
+  namespace: yas-staging
 spec:
   selector:
     matchLabels:
@@ -71,15 +71,15 @@ spec:
   - from:
     - source:
         principals:
-        - "cluster.local/ns/yas-dev/sa/storefront-bff"
-        - "cluster.local/ns/yas-dev/sa/order"
+        - "cluster.local/ns/yas-staging/sa/storefront-bff"
+        - "cluster.local/ns/yas-staging/sa/order"
 ---
 # ── 5. order: chỉ hai BFF tạo đơn hàng được phép
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
   name: allow-order
-  namespace: yas-dev
+  namespace: yas-staging
 spec:
   selector:
     matchLabels:
@@ -89,15 +89,15 @@ spec:
   - from:
     - source:
         principals:
-        - "cluster.local/ns/yas-dev/sa/storefront-bff"
-        - "cluster.local/ns/yas-dev/sa/backoffice-bff"
+        - "cluster.local/ns/yas-staging/sa/storefront-bff"
+        - "cluster.local/ns/yas-staging/sa/backoffice-bff"
 ---
 # ── 6. customer: BFF + order (lấy địa chỉ giao hàng) + sampledata
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
   name: allow-customer
-  namespace: yas-dev
+  namespace: yas-staging
 spec:
   selector:
     matchLabels:
@@ -107,17 +107,17 @@ spec:
   - from:
     - source:
         principals:
-        - "cluster.local/ns/yas-dev/sa/storefront-bff"
-        - "cluster.local/ns/yas-dev/sa/backoffice-bff"
-        - "cluster.local/ns/yas-dev/sa/order"
-        - "cluster.local/ns/yas-dev/sa/sampledata"
+        - "cluster.local/ns/yas-staging/sa/storefront-bff"
+        - "cluster.local/ns/yas-staging/sa/backoffice-bff"
+        - "cluster.local/ns/yas-staging/sa/order"
+        - "cluster.local/ns/yas-staging/sa/sampledata"
 ---
 # ── 7. inventory: backoffice-bff (quản lý kho) + order + cart + sampledata
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
   name: allow-inventory
-  namespace: yas-dev
+  namespace: yas-staging
 spec:
   selector:
     matchLabels:
@@ -127,17 +127,17 @@ spec:
   - from:
     - source:
         principals:
-        - "cluster.local/ns/yas-dev/sa/backoffice-bff"
-        - "cluster.local/ns/yas-dev/sa/order"
-        - "cluster.local/ns/yas-dev/sa/cart"
-        - "cluster.local/ns/yas-dev/sa/sampledata"
+        - "cluster.local/ns/yas-staging/sa/backoffice-bff"
+        - "cluster.local/ns/yas-staging/sa/order"
+        - "cluster.local/ns/yas-staging/sa/cart"
+        - "cluster.local/ns/yas-staging/sa/sampledata"
 ---
 # ── 8. tax: BFF (hiển thị giá) + order (tính thuế khi checkout)
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
   name: allow-tax
-  namespace: yas-dev
+  namespace: yas-staging
 spec:
   selector:
     matchLabels:
@@ -147,16 +147,16 @@ spec:
   - from:
     - source:
         principals:
-        - "cluster.local/ns/yas-dev/sa/storefront-bff"
-        - "cluster.local/ns/yas-dev/sa/backoffice-bff"
-        - "cluster.local/ns/yas-dev/sa/order"
+        - "cluster.local/ns/yas-staging/sa/storefront-bff"
+        - "cluster.local/ns/yas-staging/sa/backoffice-bff"
+        - "cluster.local/ns/yas-staging/sa/order"
 ---
 # ── 9. media: BFF upload/xem ảnh + sampledata seed ảnh ban đầu
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
   name: allow-media
-  namespace: yas-dev
+  namespace: yas-staging
 spec:
   selector:
     matchLabels:
@@ -166,16 +166,16 @@ spec:
   - from:
     - source:
         principals:
-        - "cluster.local/ns/yas-dev/sa/storefront-bff"
-        - "cluster.local/ns/yas-dev/sa/backoffice-bff"
-        - "cluster.local/ns/yas-dev/sa/sampledata"
+        - "cluster.local/ns/yas-staging/sa/storefront-bff"
+        - "cluster.local/ns/yas-staging/sa/backoffice-bff"
+        - "cluster.local/ns/yas-staging/sa/sampledata"
 ---
 # ── 10. search: hai BFF tìm kiếm sản phẩm
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
   name: allow-search
-  namespace: yas-dev
+  namespace: yas-staging
 spec:
   selector:
     matchLabels:
@@ -185,5 +185,5 @@ spec:
   - from:
     - source:
         principals:
-        - "cluster.local/ns/yas-dev/sa/storefront-bff"
-        - "cluster.local/ns/yas-dev/sa/backoffice-bff"
+        - "cluster.local/ns/yas-staging/sa/storefront-bff"
+        - "cluster.local/ns/yas-staging/sa/backoffice-bff"
