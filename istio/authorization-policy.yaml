@@ -15,6 +15,7 @@ spec:
         principals:
         - "cluster.local/ns/yas-staging/sa/storefront-ui"
         - "cluster.local/ns/yas-staging/sa/yas-staging-swagger-ui"
+        - "cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"
 ---
 # ── 2. backoffice-bff: chỉ backoffice-ui và swagger-ui
 apiVersion: security.istio.io/v1beta1
@@ -33,6 +34,7 @@ spec:
         principals:
         - "cluster.local/ns/yas-staging/sa/backoffice-ui"
         - "cluster.local/ns/yas-staging/sa/yas-staging-swagger-ui"
+        - "cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"
 ---
 # ── 3. product: BFF hai chiều + order + cart + search + sampledata
 apiVersion: security.istio.io/v1beta1
