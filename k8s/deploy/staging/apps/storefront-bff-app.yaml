@@ -3,6 +3,8 @@ kind: Application
 metadata:
   name: yas-staging-storefront-bff
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
 spec:
   project: default
   sources:
