@@ -11,6 +11,18 @@ spec:
   http:
     - match:
         - uri:
+            prefix: /authentication
+        - uri:
+            prefix: /oauth2
+        - uri:
+            exact: /logout
+      route:
+        - destination:
+            host: backoffice-bff
+            port:
+              number: 80
+    - match:
+        - uri:
             prefix: /api
       route:
         - destination:
