@@ -4,6 +4,8 @@ metadata:
   name: yas-dev-grafana-operator
   namespace: argocd
   annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+  annotations:
     argocd.argoproj.io/sync-wave: "0"
 spec:
   project: default
