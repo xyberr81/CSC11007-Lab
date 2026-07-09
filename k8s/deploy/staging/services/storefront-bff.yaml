@@ -3,4 +3,5 @@ backend:
     repository: docker.io/tranan205/yas-storefront-bff
     tag: main
   ingress:
+    enabled: false
     host: storefront.staging.yas.local.com
