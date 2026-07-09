@@ -1,4 +1,6 @@
 backend:
+  image:
+    pullPolicy: Always
   serviceMonitor:
     enabled: true
     release: yas-staging-prometheus
