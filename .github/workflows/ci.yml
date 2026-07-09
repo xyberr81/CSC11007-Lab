@@ -8,168 +8,383 @@ permissions:
 
 on:
   push:
-    branches: [ "main", "develop" ]
+    branches:
+      - "**"
+    tags:
+      - "v*"
   pull_request:
-    branches: [ "main" ]
+    branches:
+      - main
 
 jobs:
-  # Job 1: Detect which services changed
   detect-changes:
     runs-on: ubuntu-latest
     outputs:
       services: ${{ steps.changes.outputs.services }}
       changed-services: ${{ steps.changes.outputs.changed-services }}
+      has-docker-services: ${{ steps.changes.outputs.has-docker-services }}
+      git-sha-short: ${{ steps.changes.outputs.git-sha-short }}
+      is-main: ${{ steps.changes.outputs.is-main }}
+      is-release-tag: ${{ steps.changes.outputs.is-release-tag }}
+      release-tag: ${{ steps.changes.outputs.release-tag }}
+      skip-publish: ${{ steps.changes.outputs.skip-publish }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
+
       - name: Detect changed services
         id: changes
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+          GITHUB_REF: ${{ github.ref }}
+          GITHUB_SHA: ${{ github.sha }}
+          BEFORE_SHA: ${{ github.event.before }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          HEAD_COMMIT_MESSAGE: ${{ github.event.head_commit.message || '' }}
         run: |
-          # List all services in monorepo
-          SERVICES=("product" "cart" "customer" "order" "inventory" "payment" "payment-paypal" "rating" "search" "media" "location" "tax" "promotion" "webhook" "sampledata" "recommendation" "delivery" "storefront" "backoffice" "storefront-bff" "backoffice-bff")
-          
-          # Get changed files
-          if [ "${{ github.event_name }}" == "pull_request" ]; then
-            CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
-          else
-            CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
-          fi
-          
+          set -euo pipefail
+
+          chmod +x scripts/should_skip_ci.sh
+
+          ALL_SERVICES=(
+            "backoffice"
+            "backoffice-bff"
+            "cart"
+            "customer"
+            "delivery"
+            "inventory"
+            "location"
+            "media"
+            "order"
+            "payment"
+            "payment-paypal"
+            "product"
+            "promotion"
+            "rating"
+            "recommendation"
+            "sampledata"
+            "search"
+            "storefront"
+            "storefront-bff"
+            "tax"
+            "webhook"
+          )
+
+          SHARED_PREFIXES=(
+            ".github/workflows/"
+            "common-library/"
+            "deployment/"
+            "docker/"
+            "scripts/"
+          )
+
+          collect_changed_files() {
+            if [ "$EVENT_NAME" = "pull_request" ]; then
+              git fetch --no-tags origin "${BASE_REF}" --depth=1
+              git diff --name-only "origin/${BASE_REF}...${GITHUB_SHA}"
+              return
+            fi
+
+            if [ -n "${BEFORE_SHA}" ] && [ "${BEFORE_SHA}" != "0000000000000000000000000000000000000000" ] && git rev-parse "${BEFORE_SHA}^{commit}" >/dev/null 2>&1; then
+              git diff --name-only "${BEFORE_SHA}" "${GITHUB_SHA}"
+              return
+            fi
+
+            git show --pretty="" --name-only "${GITHUB_SHA}"
+          }
+
+          changed_files="$(collect_changed_files)"
+
           echo "Changed files:"
-          echo "$CHANGED_FILES"
-          
-          # Find which services changed
-          CHANGED_SERVICES=""
-          for service in "${SERVICES[@]}"; do
-            if echo "$CHANGED_FILES" | grep -q "^$service/"; then
-              CHANGED_SERVICES="$CHANGED_SERVICES $service"
+          printf '%s\n' "$changed_files"
+
+          trigger_all="false"
+          if printf '%s\n' "$changed_files" | grep -Eq '^(pom\.xml|package-lock\.json)$'; then
+            trigger_all="true"
+          fi
+
+          for prefix in "${SHARED_PREFIXES[@]}"; do
+            if printf '%s\n' "$changed_files" | grep -Eq "^${prefix}"; then
+              trigger_all="true"
+              break
             fi
           done
-          
-          # If pom.xml changed, build all services
-          if echo "$CHANGED_FILES" | grep -q "^pom.xml"; then
-            CHANGED_SERVICES="${SERVICES[*]}"
-          fi
-          
-          # Convert to JSON array for matrix strategy (compact format for GITHUB_OUTPUT)
-          if [ -n "$CHANGED_SERVICES" ]; then
-            JSON_SERVICES=$(echo $CHANGED_SERVICES | tr ' ' '\n' | jq -R . | jq -s -c .)
+
+          changed_services=()
+
+          if [ "$trigger_all" = "true" ]; then
+            changed_services=("${ALL_SERVICES[@]}")
           else
-            JSON_SERVICES="[]"
+            for service in "${ALL_SERVICES[@]}"; do
+              if printf '%s\n' "$changed_files" | grep -Eq "^${service}/"; then
+                changed_services+=("${service}")
+              fi
+            done
           fi
 
-          echo "Changed services: $CHANGED_SERVICES"
-          echo "JSON: $JSON_SERVICES"
+          has_docker_services="false"
+          docker_service_count=0
+          for service in "${changed_services[@]}"; do
+            if [ -f "${service}/Dockerfile" ]; then
+              docker_service_count=1
+              has_docker_services="true"
+              break
+            fi
+          done
 
-          # Use proper delimiter for multi-line outputs
-          echo "services<<EOF" >> $GITHUB_OUTPUT
-          echo "$JSON_SERVICES" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-          echo "changed-services=$CHANGED_SERVICES" >> $GITHUB_OUTPUT
+          if [ "${#changed_services[@]}" -gt 0 ]; then
+            services_json="$(printf '%s\n' "${changed_services[@]}" | jq -R . | jq -s -c .)"
+            changed_services_string="$(printf '%s ' "${changed_services[@]}")"
+            changed_services_string="${changed_services_string% }"
+          else
+            services_json="[]"
+            changed_services_string=""
+          fi
 
-  # Job 2: Test Phase - Run unit tests for changed services
+          git_sha_short="$(git rev-parse --short "${GITHUB_SHA}")"
+          is_main="false"
+          is_release_tag="false"
+          release_tag=""
+
+          if [ "${GITHUB_REF}" = "refs/heads/main" ]; then
+            is_main="true"
+          fi
+
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            is_release_tag="true"
+            release_tag="${GITHUB_REF#refs/tags/}"
+          fi
+
+          skip_publish="$(./scripts/should_skip_ci.sh "${GITHUB_ACTOR}" "${HEAD_COMMIT_MESSAGE}")"
+
+          echo "services=${services_json}" >> "${GITHUB_OUTPUT}"
+          echo "changed-services=${changed_services_string}" >> "${GITHUB_OUTPUT}"
+          echo "has-docker-services=${has_docker_services}" >> "${GITHUB_OUTPUT}"
+          echo "git-sha-short=${git_sha_short}" >> "${GITHUB_OUTPUT}"
+          echo "is-main=${is_main}" >> "${GITHUB_OUTPUT}"
+          echo "is-release-tag=${is_release_tag}" >> "${GITHUB_OUTPUT}"
+          echo "release-tag=${release_tag}" >> "${GITHUB_OUTPUT}"
+          echo "skip-publish=${skip_publish}" >> "${GITHUB_OUTPUT}"
+
   test:
     runs-on: ubuntu-latest
     needs: detect-changes
     if: ${{ needs.detect-changes.outputs.changed-services != '' }}
     strategy:
+      fail-fast: false
       matrix:
         service: ${{ fromJson(needs.detect-changes.outputs.services) }}
-      fail-fast: false
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up JDK 25
+        if: ${{ hashFiles(format('{0}/pom.xml', matrix.service)) != '' }}
         uses: actions/setup-java@v4
         with:
-          java-version: '25'
-          distribution: 'temurin'
-          cache: 'maven'
-      
-      - name: Run Tests for ${{ matrix.service }}
-        run: |
-          if [ -f "${{ matrix.service }}/pom.xml" ]; then
-            mvn clean test -pl ${{ matrix.service }} -am
-          elif [ -f "${{ matrix.service }}/package.json" ]; then
-            cd ${{ matrix.service }}
-            npm ci
-            npm run test:coverage
-          fi
+          java-version: "25"
+          distribution: "temurin"
+          cache: maven
 
-      - name: Generate Jacoco Coverage Report
-        run: |
-          if [ -f "${{ matrix.service }}/pom.xml" ]; then
-            mvn jacoco:report -pl ${{ matrix.service }} -am
-          fi
-        if: always()
+      - name: Set up Node.js 20
+        if: ${{ hashFiles(format('{0}/package-lock.json', matrix.service)) != '' }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: ${{ matrix.service }}/package-lock.json
 
-      - name: Quality Gate Check
+      - name: Run tests for Maven service
+        if: ${{ hashFiles(format('{0}/pom.xml', matrix.service)) != '' }}
+        run: mvn clean test -pl ${{ matrix.service }} -am
+
+      - name: Run tests for Node service
+        if: ${{ hashFiles(format('{0}/package-lock.json', matrix.service)) != '' }}
+        working-directory: ${{ matrix.service }}
+        run: |
+          npm ci
+          npm run test:coverage
+
+      - name: Generate Jacoco coverage report
+        if: ${{ always() && hashFiles(format('{0}/pom.xml', matrix.service)) != '' }}
+        run: mvn jacoco:report -pl ${{ matrix.service }} -am
+
+      - name: Quality gate check
+        if: ${{ always() && hashFiles(format('{0}/pom.xml', matrix.service)) != '' }}
         run: |
           chmod +x scripts/check_quality_gate.sh
           ./scripts/check_quality_gate.sh ${{ matrix.service }}
-        if: always()
 
-      - name: Upload Test Results
+      - name: Upload Maven test results
         uses: actions/upload-artifact@v4
-        if: always()
+        if: ${{ always() && hashFiles(format('{0}/pom.xml', matrix.service)) != '' }}
         with:
           name: test-results-${{ matrix.service }}
+          if-no-files-found: ignore
           path: |
             ${{ matrix.service }}/target/surefire-reports/*.xml
             ${{ matrix.service }}/target/failsafe-reports/*.xml
-            ${{ matrix.service }}/coverage/lcov.info
 
-      - name: Upload Coverage Report
+      - name: Upload Node test results
         uses: actions/upload-artifact@v4
-        if: always()
+        if: ${{ always() && hashFiles(format('{0}/package-lock.json', matrix.service)) != '' }}
         with:
-          name: coverage-${{ matrix.service }}
+          name: test-results-${{ matrix.service }}
+          if-no-files-found: ignore
           path: |
-            ${{ matrix.service }}/target/site/jacoco/
             ${{ matrix.service }}/coverage/
 
-  # Job 3: Build Phase - Build and package applications
+      - name: Upload Maven coverage report
+        uses: actions/upload-artifact@v4
+        if: ${{ always() && hashFiles(format('{0}/pom.xml', matrix.service)) != '' }}
+        with:
+          name: coverage-${{ matrix.service }}
+          if-no-files-found: ignore
+          path: ${{ matrix.service }}/target/site/jacoco/
+
+      - name: Upload Node coverage report
+        uses: actions/upload-artifact@v4
+        if: ${{ always() && hashFiles(format('{0}/package-lock.json', matrix.service)) != '' }}
+        with:
+          name: coverage-${{ matrix.service }}
+          if-no-files-found: ignore
+          path: ${{ matrix.service }}/coverage/
+
   build:
     runs-on: ubuntu-latest
-    needs: [detect-changes, test]
+    needs:
+      - detect-changes
+      - test
     if: ${{ needs.detect-changes.outputs.changed-services != '' }}
     strategy:
+      fail-fast: false
       matrix:
         service: ${{ fromJson(needs.detect-changes.outputs.services) }}
-      fail-fast: false
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up JDK 25
+        if: ${{ hashFiles(format('{0}/pom.xml', matrix.service)) != '' }}
         uses: actions/setup-java@v4
         with:
-          java-version: '25'
-          distribution: 'temurin'
-          cache: 'maven'
-      
-      - name: Build Application
-        run: |
-          if [ -f "${{ matrix.service }}/pom.xml" ]; then
-            mvn clean package -DskipTests -pl ${{ matrix.service }} -am
-          elif [ -f "${{ matrix.service }}/package.json" ]; then
-            cd ${{ matrix.service }}
-            npm ci
-            npm run build
-          fi
+          java-version: "25"
+          distribution: "temurin"
+          cache: maven
 
-      - name: Upload Build Artifact
+      - name: Set up Node.js 20
+        if: ${{ hashFiles(format('{0}/package-lock.json', matrix.service)) != '' }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: ${{ matrix.service }}/package-lock.json
+
+      - name: Build Maven service
+        if: ${{ hashFiles(format('{0}/pom.xml', matrix.service)) != '' }}
+        run: mvn clean package -DskipTests -pl ${{ matrix.service }} -am
+
+      - name: Build Node service
+        if: ${{ hashFiles(format('{0}/package-lock.json', matrix.service)) != '' }}
+        working-directory: ${{ matrix.service }}
+        run: |
+          npm ci
+          npm run build
+
+      - name: Upload Maven build artifact
         uses: actions/upload-artifact@v4
+        if: ${{ hashFiles(format('{0}/pom.xml', matrix.service)) != '' }}
         with:
           name: build-${{ matrix.service }}
-          path: |
-            ${{ matrix.service }}/target/*.jar
-            ${{ matrix.service }}/.next/
+          if-no-files-found: ignore
+          path: ${{ matrix.service }}/target/*.jar
 
-# Job 4: Security Phase - Run Gitleaks, SonarQube and Snyk scans
+      - name: Upload Node build artifact
+        uses: actions/upload-artifact@v4
+        if: ${{ hashFiles(format('{0}/package-lock.json', matrix.service)) != '' }}
+        with:
+          name: build-${{ matrix.service }}
+          if-no-files-found: ignore
+          path: ${{ matrix.service }}/.next/
+
+  docker-publish:
+    runs-on: ubuntu-latest
+    needs:
+      - detect-changes
+      - test
+      - build
+    if: ${{ github.event_name == 'push' && needs.detect-changes.outputs.has-docker-services == 'true' && needs.detect-changes.outputs.skip-publish != 'true' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        service: ${{ fromJson(needs.detect-changes.outputs.services) }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Skip non-Docker services
+        if: ${{ hashFiles(format('{0}/Dockerfile', matrix.service)) == '' }}
+        run: echo "No Dockerfile for ${{ matrix.service }}. Skipping."
+
+      - name: Set image variables
+        if: ${{ hashFiles(format('{0}/Dockerfile', matrix.service)) != '' }}
+        id: image
+        env:
+          SERVICE: ${{ matrix.service }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          SHA_TAG: ${{ needs.detect-changes.outputs.git-sha-short }}
+          IS_MAIN: ${{ needs.detect-changes.outputs.is-main }}
+          IS_RELEASE_TAG: ${{ needs.detect-changes.outputs.is-release-tag }}
+          RELEASE_TAG: ${{ needs.detect-changes.outputs.release-tag }}
+        run: |
+          set -euo pipefail
+
+          case "$SERVICE" in
+            storefront)
+              image_name="yas-storefront"
+              ;;
+            backoffice)
+              image_name="yas-backoffice"
+              ;;
+            *)
+              image_name="yas-${SERVICE}"
+              ;;
+          esac
+
+          {
+            echo "repository=docker.io/${DOCKERHUB_USERNAME}/${image_name}"
+            echo "tags<<EOF"
+            echo "docker.io/${DOCKERHUB_USERNAME}/${image_name}:${SHA_TAG}"
+            if [ "$IS_MAIN" = "true" ]; then
+              echo "docker.io/${DOCKERHUB_USERNAME}/${image_name}:main"
+            fi
+            if [ "$IS_RELEASE_TAG" = "true" ] && [ -n "$RELEASE_TAG" ]; then
+              echo "docker.io/${DOCKERHUB_USERNAME}/${image_name}:${RELEASE_TAG}"
+            fi
+            echo "EOF"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Set up Docker Buildx
+        if: ${{ hashFiles(format('{0}/Dockerfile', matrix.service)) != '' }}
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        if: ${{ hashFiles(format('{0}/Dockerfile', matrix.service)) != '' }}
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        if: ${{ hashFiles(format('{0}/Dockerfile', matrix.service)) != '' }}
+        uses: docker/build-push-action@v6
+        with:
+          context: ./${{ matrix.service }}
+          push: true
+          tags: ${{ steps.image.outputs.tags }}
+
   security:
     runs-on: ubuntu-latest
     steps:
@@ -181,23 +396,26 @@ jobs:
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          
+
       - name: Set up JDK 25
         uses: actions/setup-java@v4
         with:
-          java-version: '25'
-          distribution: 'temurin'
-          cache: 'maven'
+          java-version: "25"
+          distribution: "temurin"
+          cache: maven
 
       - name: Run SonarQube analysis
         if: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' }}
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: mvn -B clean verify -DskipTests sonar:sonar
-          -Dsonar.token="$SONAR_TOKEN"
+          SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
+          SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
+        run: >
+          mvn -B clean verify -DskipTests sonar:sonar
+          -Dsonar.token="${SONAR_TOKEN}"
           -Dsonar.host.url=https://sonarcloud.io
-          -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
-          -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
+          -Dsonar.organization="${SONAR_ORGANIZATION}"
+          -Dsonar.projectKey="${SONAR_PROJECT_KEY}"
 
       - name: Set up Snyk CLI
         if: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' }}
@@ -207,39 +425,51 @@ jobs:
         if: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' }}
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        run: snyk test --all-projects --severity-threshold=critical --skip-unresolved || true
+        run: snyk test --all-projects --severity-threshold=critical --skip-unresolved
 
       - name: Run Snyk monitor
         if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' }}
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        run: snyk monitor --all-projects --skip-unresolved || true
+        run: snyk monitor --all-projects --skip-unresolved
 
-  # Final Job: The one you will select in GitHub Branch Protection settings
   ci-success:
     runs-on: ubuntu-latest
-    needs: [test, build, security]
-    if: always() # This must run even if some matrix jobs were skipped
+    needs:
+      - test
+      - build
+      - docker-publish
+      - security
+    if: always()
     steps:
-      - name: Check Status
+      - name: Check status
         run: |
-          # ci-success logic:
-          # 1. If both test and build are skipped → pass (no changes detected)
-          # 2. If both test and build succeeded → pass (changes detected and passed)
-          # 3. Otherwise → fail
+          set -euo pipefail
+
           echo "Test result: ${{ needs.test.result }}"
           echo "Build result: ${{ needs.build.result }}"
+          echo "Docker publish result: ${{ needs.docker-publish.result }}"
           echo "Security result: ${{ needs.security.result }}"
 
           if [[ "${{ needs.test.result }}" == "skipped" && "${{ needs.build.result }}" == "skipped" ]]; then
-            echo "No changes detected, CI passed!"
+            echo "No relevant service changes detected."
             exit 0
           fi
-          
-          if [[ "${{ needs.test.result }}" == "success" && "${{ needs.build.result }}" == "success" && "${{ needs.security.result }}" == "success" ]]; then
-            echo "All checks passed, CI passed!"
-            exit 0
+
+          if [[ "${{ needs.test.result }}" != "success" ]]; then
+            exit 1
           fi
-          
-          echo "CI failed or was not successful!"
-          exit 1
+
+          if [[ "${{ needs.build.result }}" != "success" ]]; then
+            exit 1
+          fi
+
+          if [[ "${{ needs.security.result }}" != "success" ]]; then
+            exit 1
+          fi
+
+          if [[ "${{ needs.docker-publish.result }}" != "success" && "${{ needs.docker-publish.result }}" != "skipped" ]]; then
+            exit 1
+          fi
+
+          echo "CI passed."
