@@ -1,6 +1,8 @@
 backend:
   image:
     pullPolicy: Always
+  podAnnotations:
+    traffic.sidecar.istio.io/excludeInboundPorts: "8090"
   serviceMonitor:
     enabled: true
     release: yas-staging-prometheus
