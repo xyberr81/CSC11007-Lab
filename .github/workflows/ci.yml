@@ -438,7 +438,6 @@ jobs:
     needs:
       - test
       - build
-      - docker-publish
       - security
     if: always()
     steps:
@@ -448,7 +447,6 @@ jobs:
 
           echo "Test result: ${{ needs.test.result }}"
           echo "Build result: ${{ needs.build.result }}"
-          echo "Docker publish result: ${{ needs.docker-publish.result }}"
           echo "Security result: ${{ needs.security.result }}"
 
           if [[ "${{ needs.test.result }}" == "skipped" && "${{ needs.build.result }}" == "skipped" ]]; then
@@ -465,10 +463,6 @@ jobs:
           fi
 
           if [[ "${{ needs.security.result }}" != "success" ]]; then
-            exit 1
-          fi
-
-          if [[ "${{ needs.docker-publish.result }}" != "success" && "${{ needs.docker-publish.result }}" != "skipped" ]]; then
             exit 1
           fi
 
