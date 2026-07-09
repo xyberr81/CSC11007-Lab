@@ -1,4 +1,7 @@
 backend:
+  serviceMonitor:
+    enabled: true
+    release: yas-staging-prometheus
   ingress:
     host: api.staging.yas.local.com
 applicationConfig:

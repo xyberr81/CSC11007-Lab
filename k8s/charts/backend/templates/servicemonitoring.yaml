@@ -4,7 +4,7 @@ kind: ServiceMonitor
 metadata:
   name: {{ include "backend.fullname" . }}
   labels:
-    release: prometheus
+    release: {{ .Values.serviceMonitor.release | quote }}
 spec:
   selector:
     matchLabels:
