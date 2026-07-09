@@ -168,6 +168,7 @@ spec:
   - from:
     - source:
         principals:
+        - "cluster.local/ns/istio-system/sa/istio-ingressgateway-service-account"
         - "cluster.local/ns/yas-staging/sa/storefront-bff"
         - "cluster.local/ns/yas-staging/sa/backoffice-bff"
         - "cluster.local/ns/yas-staging/sa/product"
