@@ -3,9 +3,9 @@ apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
 metadata:
   name: default
-  namespace: yas-dev
+  namespace: yas-staging
 spec:
-  host: "*.yas-dev.svc.cluster.local"
+  host: "*.yas-staging.svc.cluster.local"
   trafficPolicy:
     tls:
       mode: ISTIO_MUTUAL               # Client dùng cert do Istio quản lý
@@ -33,9 +33,9 @@ apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
 metadata:
   name: storefront-bff
-  namespace: yas-dev
+  namespace: yas-staging
 spec:
-  host: storefront-bff.yas-dev.svc.cluster.local
+  host: storefront-bff.yas-staging.svc.cluster.local
   trafficPolicy:
     tls:
       mode: ISTIO_MUTUAL
@@ -63,9 +63,9 @@ apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
 metadata:
   name: backoffice-bff
-  namespace: yas-dev
+  namespace: yas-staging
 spec:
-  host: backoffice-bff.yas-dev.svc.cluster.local
+  host: backoffice-bff.yas-staging.svc.cluster.local
   trafficPolicy:
     tls:
       mode: ISTIO_MUTUAL
@@ -93,9 +93,9 @@ apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
 metadata:
   name: order
-  namespace: yas-dev
+  namespace: yas-staging
 spec:
-  host: order.yas-dev.svc.cluster.local
+  host: order.yas-staging.svc.cluster.local
   trafficPolicy:
     tls:
       mode: ISTIO_MUTUAL
@@ -123,9 +123,9 @@ apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
 metadata:
   name: cart
-  namespace: yas-dev
+  namespace: yas-staging
 spec:
-  host: cart.yas-dev.svc.cluster.local
+  host: cart.yas-staging.svc.cluster.local
   trafficPolicy:
     tls:
       mode: ISTIO_MUTUAL
@@ -154,9 +154,9 @@ apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
 metadata:
   name: product
-  namespace: yas-dev
+  namespace: yas-staging
 spec:
-  host: product.yas-dev.svc.cluster.local
+  host: product.yas-staging.svc.cluster.local
   trafficPolicy:
     tls:
       mode: ISTIO_MUTUAL
@@ -183,9 +183,9 @@ apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
 metadata:
   name: inventory
-  namespace: yas-dev
+  namespace: yas-staging
 spec:
-  host: inventory.yas-dev.svc.cluster.local
+  host: inventory.yas-staging.svc.cluster.local
   trafficPolicy:
     tls:
       mode: ISTIO_MUTUAL
@@ -213,9 +213,9 @@ apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
 metadata:
   name: customer
-  namespace: yas-dev
+  namespace: yas-staging
 spec:
-  host: customer.yas-dev.svc.cluster.local
+  host: customer.yas-staging.svc.cluster.local
   trafficPolicy:
     tls:
       mode: ISTIO_MUTUAL
@@ -243,9 +243,9 @@ apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
 metadata:
   name: payment
-  namespace: yas-dev
+  namespace: yas-staging
 spec:
-  host: payment.yas-dev.svc.cluster.local
+  host: payment.yas-staging.svc.cluster.local
   trafficPolicy:
     tls:
       mode: ISTIO_MUTUAL
@@ -272,9 +272,9 @@ apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
 metadata:
   name: tax
-  namespace: yas-dev
+  namespace: yas-staging
 spec:
-  host: tax.yas-dev.svc.cluster.local
+  host: tax.yas-staging.svc.cluster.local
   trafficPolicy:
     tls:
       mode: ISTIO_MUTUAL
@@ -302,9 +302,9 @@ apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
 metadata:
   name: media
-  namespace: yas-dev
+  namespace: yas-staging
 spec:
-  host: media.yas-dev.svc.cluster.local
+  host: media.yas-staging.svc.cluster.local
   trafficPolicy:
     tls:
       mode: ISTIO_MUTUAL
@@ -332,9 +332,9 @@ apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
 metadata:
   name: search
-  namespace: yas-dev
+  namespace: yas-staging
 spec:
-  host: search.yas-dev.svc.cluster.local
+  host: search.yas-staging.svc.cluster.local
   trafficPolicy:
     tls:
       mode: ISTIO_MUTUAL

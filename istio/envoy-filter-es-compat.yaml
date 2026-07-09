@@ -2,7 +2,7 @@ apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: downgrade-es-compat-header
-  namespace: yas-dev
+  namespace: yas-staging
 spec:
   workloadSelector:
     labels:
