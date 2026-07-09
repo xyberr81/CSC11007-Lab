@@ -11,6 +11,9 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthenticationController {
     @GetMapping("/authentication/user")
     public ResponseEntity<AuthenticatedUser> user(@AuthenticationPrincipal OAuth2User principal) {
+        if (principal == null) {
+            return ResponseEntity.status(401).build();
+        }
         AuthenticatedUser authenticatedUser = new AuthenticatedUser(principal.getAttribute("preferred_username"));
         return ResponseEntity.ok(authenticatedUser);
     }
