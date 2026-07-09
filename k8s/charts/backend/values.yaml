@@ -110,6 +110,7 @@ readinessProbe:
 
 serviceMonitor:
   enabled: false
+  release: prometheus
 
 service:
   type: ClusterIP
