@@ -33,6 +33,6 @@ spec:
               number: 80
     - route:
         - destination:
-            host: backoffice-ui
+            host: backoffice-bff
             port:
-              number: 3000
+              number: 80
