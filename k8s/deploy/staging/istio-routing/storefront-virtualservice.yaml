@@ -11,6 +11,18 @@ spec:
   http:
     - match:
         - uri:
+            exact: /authentication
+        - uri:
+            prefix: /oauth2
+        - uri:
+            exact: /logout
+      route:
+        - destination:
+            host: storefront-bff
+            port:
+              number: 80
+    - match:
+        - uri:
             prefix: /api
       route:
         - destination:
