@@ -9,8 +9,16 @@ spec:
   gateways:
     - yas-staging-public-gateway
   http:
-    - route:
+    - match:
+        - uri:
+            prefix: /api
+      route:
         - destination:
             host: backoffice-bff
+            port:
+              number: 80
+    - route:
+        - destination:
+            host: backoffice-ui
             port:
               number: 80

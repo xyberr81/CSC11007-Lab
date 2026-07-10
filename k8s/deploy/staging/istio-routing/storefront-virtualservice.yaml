@@ -9,8 +9,16 @@ spec:
   gateways:
     - yas-staging-public-gateway
   http:
-    - route:
+    - match:
+        - uri:
+            prefix: /api
+      route:
         - destination:
             host: storefront-bff
+            port:
+              number: 80
+    - route:
+        - destination:
+            host: storefront-ui
             port:
               number: 80
