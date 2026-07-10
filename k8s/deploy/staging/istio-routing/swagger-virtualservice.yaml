@@ -11,6 +11,14 @@ spec:
   http:
     - match:
         - uri:
+            prefix: /media
+      route:
+        - destination:
+            host: media
+            port:
+              number: 80
+    - match:
+        - uri:
             prefix: /swagger-ui
       route:
         - destination:
