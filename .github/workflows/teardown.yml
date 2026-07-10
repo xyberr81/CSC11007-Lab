@@ -1,10 +1,10 @@
-name: Teardown Dev Environment
+name: Teardown Staging Environment
 
 on:
   workflow_dispatch:
     inputs:
       confirm:
-        description: "Type 'YES' to confirm teardown of yas-dev environment"
+        description: "Type 'YES' to confirm teardown of yas-staging environment"
         required: true
         default: "NO"
 
@@ -34,17 +34,17 @@ jobs:
 
       - name: Uninstall all Helm releases
         run: |
-          echo "Bắt đầu xóa toàn bộ các Helm releases trong namespace yas-dev..."
+          echo "Bắt đầu xóa toàn bộ các Helm releases trong namespace yas-staging..."
           
           SERVICES="storefront-ui storefront-bff backoffice-ui backoffice-bff swagger-ui cart customer inventory location media order payment payment-paypal product promotion rating search tax recommendation webhook sampledata"
           
           for chart in $SERVICES; do
             echo "Đang gỡ bỏ $chart..."
-            helm uninstall $chart -n yas-dev || echo "Không tìm thấy hoặc không thể xóa $chart, bỏ qua."
+            helm uninstall $chart -n yas-staging || echo "Không tìm thấy hoặc không thể xóa $chart, bỏ qua."
           done
 
       - name: Delete Namespace
         run: |
-          echo "Tiến hành xóa dứt điểm namespace yas-dev..."
-          kubectl delete namespace yas-dev --ignore-not-found=true || echo "Không thể xóa namespace, vui lòng kiểm tra KUBECONFIG."
+          echo "Tiến hành xóa dứt điểm namespace yas-staging..."
+          kubectl delete namespace yas-staging --ignore-not-found=true || echo "Không thể xóa namespace, vui lòng kiểm tra KUBECONFIG."
           echo "Hoàn tất kịch bản dọn dẹp!"
