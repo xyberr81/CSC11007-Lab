@@ -15,6 +15,8 @@ spec:
         - uri:
             prefix: /oauth2
         - uri:
+            prefix: /login/oauth2
+        - uri:
             exact: /logout
       route:
         - destination:
