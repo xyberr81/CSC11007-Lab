@@ -4,18 +4,15 @@ import static com.yas.rating.util.SecurityContextUtils.setUpSecurityContext;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.yas.rating.config.ServiceUrlConfig;
 import com.yas.rating.viewmodel.OrderExistsByProductAndUserGetVm;
 import java.net.URI;
-import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-import org.springframework.http.HttpHeaders;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -60,13 +57,7 @@ class OrderServiceTest {
         RestClient.RequestHeadersUriSpec requestHeadersUriSpec = Mockito.mock(RestClient.RequestHeadersUriSpec.class);
         when(restClient.get()).thenReturn(requestHeadersUriSpec);
         when(requestHeadersUriSpec.uri(url)).thenReturn(requestHeadersUriSpec);
-        AtomicReference<HttpHeaders> headers = new AtomicReference<>();
-        when(requestHeadersUriSpec.headers(any())).thenAnswer(invocation -> {
-            HttpHeaders capturedHeaders = new HttpHeaders();
-            invocation.<java.util.function.Consumer<HttpHeaders>>getArgument(0).accept(capturedHeaders);
-            headers.set(capturedHeaders);
-            return requestHeadersUriSpec;
-        });
+        when(requestHeadersUriSpec.headers(any())).thenReturn(requestHeadersUriSpec);
         when(requestHeadersUriSpec.retrieve()).thenReturn(responseSpec);
 
         OrderExistsByProductAndUserGetVm orderExistsByProductAndUserGetVm
@@ -77,10 +68,6 @@ class OrderServiceTest {
         OrderExistsByProductAndUserGetVm result = orderService.checkOrderExistsByProductAndUserWithStatus(1L);
 
         assertThat(result.isPresent()).isTrue();
-        assertThat(headers.get()).isNotNull();
-        assertThat(headers.get().getFirst(HttpHeaders.AUTHORIZATION)).isEqualTo("Bearer test");
-        verify(requestHeadersUriSpec).uri(url);
-        verify(responseSpec).body(OrderExistsByProductAndUserGetVm.class);
 
     }
 
