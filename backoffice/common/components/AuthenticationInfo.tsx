@@ -9,17 +9,28 @@ export default function AuthenticationInfo() {
     username: string;
   };
 
-  const [authenticatedUser, setAuthenticatedUser] = useState<AuthenticatedUser>({ username: '' });
+  const [authenticatedUser, setAuthenticatedUser] = useState<AuthenticatedUser | null>(null);
 
   async function getAuthenticatedUser() {
-    return (await apiClientService.get(baseUrl)).json();
+    const response = await apiClientService.get(baseUrl);
+    if (response.status === 401) {
+      window.location.assign('/oauth2/authorization/api-client');
+      return null;
+    }
+    return response.json();
   }
 
   useEffect(() => {
     getAuthenticatedUser().then((data) => {
-      setAuthenticatedUser(data);
+      if (data) {
+        setAuthenticatedUser(data);
+      }
     });
   }, []);
+
+  if (!authenticatedUser) {
+    return null;
+  }
 
   return (
     <>
