@@ -170,6 +170,7 @@ spec:
         principals:
         - "cluster.local/ns/yas-staging/sa/storefront-bff"
         - "cluster.local/ns/yas-staging/sa/backoffice-bff"
+        - "cluster.local/ns/yas-staging/sa/product"
         - "cluster.local/ns/yas-staging/sa/sampledata"
 ---
 # ── 10. search: hai BFF tìm kiếm sản phẩm
