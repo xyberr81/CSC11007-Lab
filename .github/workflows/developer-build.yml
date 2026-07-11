@@ -77,6 +77,7 @@ jobs:
           token: ${{ steps.app-token.outputs.token }}
 
       - name: Prepare helper scripts
+        shell: bash
         run: chmod +x scripts/resolve_branch_tag.sh scripts/check_dockerhub_image.sh scripts/update_gitops_values.sh
 
       - name: Log in to Docker Hub
@@ -86,6 +87,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Resolve tags, verify images, and update GitOps manifests
+        shell: bash
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           BRANCH_BACKOFFICE: ${{ github.event.inputs.backoffice }}
@@ -103,6 +105,13 @@ jobs:
           BRANCH_TAX: ${{ github.event.inputs.tax }}
         run: |
           set -euo pipefail
+
+          trap 'echo "::error::Developer build failed near line ${LINENO}. Check the service logs above for the exact branch/image/manifest being processed."' ERR
+
+          if [[ -z "${DOCKERHUB_USERNAME}" ]]; then
+            echo "::error::DOCKERHUB_USERNAME secret is empty or missing."
+            exit 1
+          fi
 
           declare -A branches=(
             [backoffice]="${BRANCH_BACKOFFICE}"
@@ -145,6 +154,7 @@ jobs:
 
           for service in "${services[@]}"; do
             branch="${branches[$service]}"
+            echo "Resolving deploy tag for service=${service} branch=${branch}"
             deploy_tag="$(./scripts/resolve_branch_tag.sh "$branch")"
 
             case "$service" in
@@ -163,13 +173,16 @@ jobs:
             esac
 
             image_repository="docker.io/${DOCKERHUB_USERNAME}/${image_name}"
+            echo "Verifying image=${image_repository}:${deploy_tag}"
             ./scripts/check_dockerhub_image.sh "${image_repository}" "${deploy_tag}"
+            echo "Updating manifest for service=${service}"
             ./scripts/update_gitops_values.sh "${service}" "${DOCKERHUB_USERNAME}" "${deploy_tag}"
 
             echo "| ${service} | ${branch} | ${deploy_tag} | ${manifest_name} |" >> "${GITHUB_STEP_SUMMARY}"
           done
 
       - name: Commit and push GitOps updates
+        shell: bash
         run: |
           set -euo pipefail
 
