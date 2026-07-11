@@ -52,6 +52,11 @@ case "$service" in
     image_name="yas-product"
     section_name="backend"
     ;;
+  rating)
+    manifest_name="rating"
+    image_name="yas-rating"
+    section_name="backend"
+    ;;
   sampledata)
     manifest_name="sampledata"
     image_name="yas-sampledata"
