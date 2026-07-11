@@ -1,7 +1,7 @@
 backend:
   image:
     repository: docker.io/tranan205/yas-cart
-    tag: 7d4bf36d
+    tag: 8d7efaa0
   service:
     type: NodePort
     nodePort: 30083
